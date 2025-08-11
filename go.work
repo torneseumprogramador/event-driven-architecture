@@ -1,0 +1,9 @@
+go 1.21
+
+use (
+	./pkg
+	./services/order-service
+	./services/product-service
+	./services/query-service
+	./services/user-service
+)
