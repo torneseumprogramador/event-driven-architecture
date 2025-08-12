@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"time"
-	"order-service/internal/api"
+	"order-service/internal/api/controllers"
+	"order-service/internal/api/routes"
 	"order-service/internal/domain"
-	"order-service/internal/outbox"
+	"order-service/internal/services"
 	"order-service/internal/repo"
 	pkgconfig "pkg/config"
 	pkgkafka "pkg/kafka"
@@ -50,7 +51,7 @@ func main() {
 	orderRepo := repo.NewGormOrderRepository(db)
 	
 	// Inicializa serviços
-	outboxService := outbox.NewOutboxService(db)
+	orderService := services.NewOrderService(db)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
@@ -76,19 +77,11 @@ func main() {
 	// Healthcheck
 	router.GET("/healthz", pkghttp.HealthCheck())
 	
-	// Handlers
-	orderHandler := api.NewOrderHandler(orderRepo, outboxService)
+	// Configura controllers
+	orderController := controllers.NewOrderController(orderRepo, orderService)
 	
-	// Rotas
-	api := router.Group("/api/v1")
-	{
-		orders := api.Group("/orders")
-		{
-			orders.POST("", orderHandler.CreateOrder)
-			orders.POST("/:id/pay", orderHandler.PayOrder)
-			orders.POST("/:id/cancel", orderHandler.CancelOrder)
-		}
-	}
+	// Configura rotas
+	routes.SetupOrderRoutes(router, orderController)
 	
 	// Inicia servidor
 	log.Info().Msg("servidor iniciado")

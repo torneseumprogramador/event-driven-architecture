@@ -11,6 +11,9 @@ import (
 type OrderRepository interface {
 	Create(ctx context.Context, order *domain.Order) error
 	GetByID(ctx context.Context, id uint) (*domain.Order, error)
+	GetAll(ctx context.Context) ([]domain.Order, error)
+	Update(ctx context.Context, order *domain.Order) error
+	Delete(ctx context.Context, id uint) error
 	UpdateStatus(ctx context.Context, id uint, status string) error
 }
 
@@ -64,4 +67,26 @@ func (r *GormOrderRepository) UpdateStatus(ctx context.Context, id uint, status 
 		Model(&domain.Order{}).
 		Where("id = ?", id).
 		Update("status", status).Error
+}
+
+// GetAll busca todos os pedidos
+func (r *GormOrderRepository) GetAll(ctx context.Context) ([]domain.Order, error) {
+	var orders []domain.Order
+	err := r.db.WithContext(ctx).
+		Preload("Items").
+		Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+// Update atualiza um pedido
+func (r *GormOrderRepository) Update(ctx context.Context, order *domain.Order) error {
+	return r.db.WithContext(ctx).Save(order).Error
+}
+
+// Delete remove um pedido
+func (r *GormOrderRepository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&domain.Order{}, id).Error
 }
