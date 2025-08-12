@@ -11,7 +11,9 @@ import (
 type ProductRepository interface {
 	Create(ctx context.Context, product *domain.Product) error
 	GetByID(ctx context.Context, id uint) (*domain.Product, error)
+	GetAll(ctx context.Context) ([]domain.Product, error)
 	Update(ctx context.Context, product *domain.Product) error
+	Delete(ctx context.Context, id uint) error
 	ReserveStock(ctx context.Context, productID uint, quantity int) error
 	ReleaseStock(ctx context.Context, productID uint, quantity int) error
 }
@@ -73,4 +75,19 @@ func (r *GormProductRepository) ReleaseStock(ctx context.Context, productID uint
 		product.ReleaseStock(quantity)
 		return tx.Save(&product).Error
 	})
+}
+
+// GetAll busca todos os produtos
+func (r *GormProductRepository) GetAll(ctx context.Context) ([]domain.Product, error) {
+	var products []domain.Product
+	err := r.db.WithContext(ctx).Find(&products).Error
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
+// Delete remove um produto
+func (r *GormProductRepository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&domain.Product{}, id).Error
 }

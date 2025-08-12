@@ -14,39 +14,7 @@ type Product struct {
 	CreatedAt time.Time `json:"created_at" gorm:"not null"`
 }
 
-// CreateProductRequest request para criar produto
-type CreateProductRequest struct {
-	Name  string  `json:"name" binding:"required"`
-	Price float64 `json:"price" binding:"required,gt=0"`
-	Stock int     `json:"stock" binding:"required,gte=0"`
-}
 
-// UpdateProductRequest request para atualizar produto
-type UpdateProductRequest struct {
-	Name  *string  `json:"name,omitempty"`
-	Price *float64 `json:"price,omitempty"`
-	Stock *int     `json:"stock,omitempty"`
-}
-
-// ProductResponse response do produto
-type ProductResponse struct {
-	ID        uint      `json:"id"`
-	Name      string    `json:"name"`
-	Price     float64   `json:"price"`
-	Stock     int       `json:"stock"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// ToResponse converte Product para ProductResponse
-func (p *Product) ToResponse() ProductResponse {
-	return ProductResponse{
-		ID:        p.ID,
-		Name:      p.Name,
-		Price:     p.Price,
-		Stock:     p.Stock,
-		CreatedAt: p.CreatedAt,
-	}
-}
 
 // ReserveStock reserva estoque do produto
 func (p *Product) ReserveStock(quantity int) error {
