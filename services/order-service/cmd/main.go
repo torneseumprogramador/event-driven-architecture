@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 	"order-service/internal/api"
+	"order-service/internal/domain"
 	"order-service/internal/outbox"
 	"order-service/internal/repo"
 	pkgconfig "pkg/config"
@@ -41,7 +42,7 @@ func main() {
 	}
 	
 	// Auto-migra tabelas
-	if err := db.AutoMigrate(&repo.GormOrderRepository{}); err != nil {
+	if err := db.AutoMigrate(&domain.Order{}, &domain.OrderProduct{}); err != nil {
 		log.Fatal().Err(err).Msg("erro ao migrar tabelas")
 	}
 	

@@ -6,6 +6,7 @@ import (
 	"time"
 	"product-service/internal/api"
 	"product-service/internal/consumer"
+	"product-service/internal/domain"
 	"product-service/internal/outbox"
 	"product-service/internal/repo"
 	pkgconfig "pkg/config"
@@ -43,7 +44,7 @@ func main() {
 	}
 	
 	// Auto-migra tabelas
-	if err := db.AutoMigrate(&repo.GormProductRepository{}); err != nil {
+	if err := db.AutoMigrate(&domain.Product{}); err != nil {
 		log.Fatal().Err(err).Msg("erro ao migrar tabelas")
 	}
 	

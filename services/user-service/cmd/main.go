@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 	"user-service/internal/api"
+	"user-service/internal/domain"
 	"user-service/internal/outbox"
 	"user-service/internal/repo"
 	pkgconfig "pkg/config"
@@ -41,7 +42,7 @@ func main() {
 	}
 	
 	// Auto-migra tabelas
-	if err := db.AutoMigrate(&repo.GormUserRepository{}); err != nil {
+	if err := db.AutoMigrate(&domain.User{}); err != nil {
 		log.Fatal().Err(err).Msg("erro ao migrar tabelas")
 	}
 	

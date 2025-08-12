@@ -45,19 +45,19 @@ test: ## Executa testes em todos os serviços
 # Comandos para executar serviços individualmente
 run-user: ## Executa o user-service
 	@echo "Executando user-service..."
-	@cd services/user-service && $(GO) run cmd/main.go
+	@cd services/user-service && SERVICE_NAME=user-service PORT=8081 $(GO) run cmd/main.go
 
 run-product: ## Executa o product-service
 	@echo "Executando product-service..."
-	@cd services/product-service && $(GO) run cmd/main.go
+	@cd services/product-service && SERVICE_NAME=product-service PORT=8082 $(GO) run cmd/main.go
 
 run-order: ## Executa o order-service
 	@echo "Executando order-service..."
-	@cd services/order-service && $(GO) run cmd/main.go
+	@cd services/order-service && SERVICE_NAME=order-service PORT=8083 $(GO) run cmd/main.go
 
 run-query: ## Executa o query-service
 	@echo "Executando query-service..."
-	@cd services/query-service && $(GO) run cmd/main.go
+	@cd services/query-service && SERVICE_NAME=query-service PORT=8084 $(GO) run cmd/main.go
 
 # Comandos para build
 build-user: ## Compila o user-service
