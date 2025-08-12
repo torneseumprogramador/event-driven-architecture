@@ -3,8 +3,9 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"user-service/internal/domain"
+	"user-service/internal/domain/entities"
 	"user-service/internal/dto"
+	"user-service/internal/dto/requests"
 	"user-service/internal/services"
 	"user-service/internal/repo"
 
@@ -28,14 +29,14 @@ func NewUserController(userRepo repo.UserRepository, userService *services.UserS
 
 // CreateUser cria um novo usuário
 func (c *UserController) CreateUser(ctx *gin.Context) {
-	var req dto.CreateUserRequest
+	var req requests.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do usuário")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
 		return
 	}
 
-	user := &domain.User{
+	user := &entities.User{
 		Name:  req.Name,
 		Email: req.Email,
 	}
@@ -103,7 +104,7 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	var req dto.UpdateUserRequest
+	var req requests.UpdateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do usuário")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})

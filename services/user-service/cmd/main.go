@@ -6,7 +6,7 @@ import (
 	"time"
 	"user-service/internal/api/controllers"
 	"user-service/internal/api/routes"
-	"user-service/internal/domain"
+	"user-service/internal/domain/entities"
 	"user-service/internal/services"
 	"user-service/internal/repo"
 	pkgconfig "pkg/config"
@@ -43,7 +43,7 @@ func main() {
 	}
 	
 	// Auto-migra tabelas
-	if err := db.AutoMigrate(&domain.User{}); err != nil {
+	if err := db.AutoMigrate(&entities.User{}); err != nil {
 		log.Fatal().Err(err).Msg("erro ao migrar tabelas")
 	}
 	

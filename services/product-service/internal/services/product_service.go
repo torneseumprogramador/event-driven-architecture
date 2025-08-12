@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"product-service/internal/domain"
+	"product-service/internal/domain/entities"
 	pkgoutbox "pkg/outbox"
 	pkgevents "pkg/events"
 
@@ -21,7 +21,7 @@ func NewProductService(db *gorm.DB) *ProductService {
 }
 
 // CreateProductWithEvent cria um produto e grava o evento na outbox na mesma transação
-func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *domain.Product) error {
+func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *entities.Product) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Cria o produto
 		if err := tx.Create(product).Error; err != nil {
@@ -58,7 +58,7 @@ func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *do
 func (s *ProductService) UpdateProductWithEvent(ctx context.Context, productID uint, updates map[string]interface{}) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Busca o produto atual
-		var product domain.Product
+		var product entities.Product
 		if err := tx.Where("id = ?", productID).First(&product).Error; err != nil {
 			return fmt.Errorf("produto não encontrado")
 		}

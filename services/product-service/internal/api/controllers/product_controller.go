@@ -3,8 +3,9 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"product-service/internal/domain"
+	"product-service/internal/domain/entities"
 	"product-service/internal/dto"
+	"product-service/internal/dto/requests"
 	"product-service/internal/services"
 	"product-service/internal/repo"
 
@@ -28,7 +29,7 @@ func NewProductController(productRepo repo.ProductRepository, productService *se
 
 // CreateProduct cria um novo produto
 func (c *ProductController) CreateProduct(ctx *gin.Context) {
-	var req dto.CreateProductRequest
+	var req requests.CreateProductRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do produto")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
@@ -36,7 +37,7 @@ func (c *ProductController) CreateProduct(ctx *gin.Context) {
 	}
 	
 	// Cria o produto com evento na outbox
-	product := &domain.Product{
+	product := &entities.Product{
 		Name:  req.Name,
 		Price: req.Price,
 		Stock: req.Stock,
@@ -99,7 +100,7 @@ func (c *ProductController) UpdateProduct(ctx *gin.Context) {
 		return
 	}
 	
-	var req dto.UpdateProductRequest
+	var req requests.UpdateProductRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do produto")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})

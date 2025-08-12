@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"order-service/internal/domain"
+	"order-service/internal/domain/entities"
 	pkgoutbox "pkg/outbox"
 	pkgevents "pkg/events"
 
@@ -21,7 +21,7 @@ func NewOrderService(db *gorm.DB) *OrderService {
 }
 
 // CreateOrderWithEvent cria um pedido e grava o evento na outbox na mesma transação
-func (s *OrderService) CreateOrderWithEvent(ctx context.Context, order *domain.Order) error {
+func (s *OrderService) CreateOrderWithEvent(ctx context.Context, order *entities.Order) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Cria o pedido
 		if err := tx.Create(order).Error; err != nil {
@@ -78,7 +78,7 @@ func (s *OrderService) CreateOrderWithEvent(ctx context.Context, order *domain.O
 func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Verifica se o pedido existe e está no status correto
-		var order domain.Order
+		var order entities.Order
 		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
 			return fmt.Errorf("pedido não encontrado")
 		}
@@ -88,7 +88,7 @@ func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) erro
 		}
 		
 		// Atualiza o status do pedido
-		if err := tx.Model(&domain.Order{}).Where("id = ?", orderID).Update("status", "PAID").Error; err != nil {
+		if err := tx.Model(&entities.Order{}).Where("id = ?", orderID).Update("status", "PAID").Error; err != nil {
 			return err
 		}
 		
@@ -117,7 +117,7 @@ func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) erro
 func (s *OrderService) CancelOrderWithEvent(ctx context.Context, orderID uint, reason string) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Verifica se o pedido existe e pode ser cancelado
-		var order domain.Order
+		var order entities.Order
 		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
 			return fmt.Errorf("pedido não encontrado")
 		}
@@ -131,7 +131,7 @@ func (s *OrderService) CancelOrderWithEvent(ctx context.Context, orderID uint, r
 		}
 		
 		// Atualiza o status do pedido
-		if err := tx.Model(&domain.Order{}).Where("id = ?", orderID).Update("status", "CANCELED").Error; err != nil {
+		if err := tx.Model(&entities.Order{}).Where("id = ?", orderID).Update("status", "CANCELED").Error; err != nil {
 			return err
 		}
 		

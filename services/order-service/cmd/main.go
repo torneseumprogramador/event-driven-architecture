@@ -6,7 +6,7 @@ import (
 	"time"
 	"order-service/internal/api/controllers"
 	"order-service/internal/api/routes"
-	"order-service/internal/domain"
+	"order-service/internal/domain/entities"
 	"order-service/internal/services"
 	"order-service/internal/repo"
 	pkgconfig "pkg/config"
@@ -43,7 +43,7 @@ func main() {
 	}
 	
 	// Auto-migra tabelas
-	if err := db.AutoMigrate(&domain.Order{}, &domain.OrderProduct{}); err != nil {
+	if err := db.AutoMigrate(&entities.Order{}, &entities.OrderProduct{}); err != nil {
 		log.Fatal().Err(err).Msg("erro ao migrar tabelas")
 	}
 	

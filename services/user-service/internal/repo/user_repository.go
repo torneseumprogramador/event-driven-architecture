@@ -2,18 +2,18 @@ package repo
 
 import (
 	"context"
-	"user-service/internal/domain"
+	"user-service/internal/domain/entities"
 
 	"gorm.io/gorm"
 )
 
 // UserRepository interface para operações de usuário
 type UserRepository interface {
-	Create(ctx context.Context, user *domain.User) error
-	GetByID(ctx context.Context, id uint) (*domain.User, error)
-	GetByEmail(ctx context.Context, email string) (*domain.User, error)
-	GetAll(ctx context.Context) ([]domain.User, error)
-	Update(ctx context.Context, user *domain.User) error
+	Create(ctx context.Context, user *entities.User) error
+	GetByID(ctx context.Context, id uint) (*entities.User, error)
+	GetByEmail(ctx context.Context, email string) (*entities.User, error)
+	GetAll(ctx context.Context) ([]entities.User, error)
+	Update(ctx context.Context, user *entities.User) error
 	Delete(ctx context.Context, id uint) error
 }
 
@@ -28,13 +28,13 @@ func NewGormUserRepository(db *gorm.DB) *GormUserRepository {
 }
 
 // Create cria um novo usuário
-func (r *GormUserRepository) Create(ctx context.Context, user *domain.User) error {
+func (r *GormUserRepository) Create(ctx context.Context, user *entities.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
 }
 
 // GetByID busca usuário por ID
-func (r *GormUserRepository) GetByID(ctx context.Context, id uint) (*domain.User, error) {
-	var user domain.User
+func (r *GormUserRepository) GetByID(ctx context.Context, id uint) (*entities.User, error) {
+	var user entities.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
 	if err != nil {
 		return nil, err
@@ -43,8 +43,8 @@ func (r *GormUserRepository) GetByID(ctx context.Context, id uint) (*domain.User
 }
 
 // GetByEmail busca usuário por email
-func (r *GormUserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	var user domain.User
+func (r *GormUserRepository) GetByEmail(ctx context.Context, email string) (*entities.User, error) {
+	var user entities.User
 	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
@@ -53,8 +53,8 @@ func (r *GormUserRepository) GetByEmail(ctx context.Context, email string) (*dom
 }
 
 // GetAll busca todos os usuários
-func (r *GormUserRepository) GetAll(ctx context.Context) ([]domain.User, error) {
-	var users []domain.User
+func (r *GormUserRepository) GetAll(ctx context.Context) ([]entities.User, error) {
+	var users []entities.User
 	err := r.db.WithContext(ctx).Find(&users).Error
 	if err != nil {
 		return nil, err
@@ -63,11 +63,11 @@ func (r *GormUserRepository) GetAll(ctx context.Context) ([]domain.User, error) 
 }
 
 // Update atualiza um usuário
-func (r *GormUserRepository) Update(ctx context.Context, user *domain.User) error {
+func (r *GormUserRepository) Update(ctx context.Context, user *entities.User) error {
 	return r.db.WithContext(ctx).Save(user).Error
 }
 
 // Delete remove um usuário
 func (r *GormUserRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&domain.User{}, id).Error
+	return r.db.WithContext(ctx).Delete(&entities.User{}, id).Error
 }

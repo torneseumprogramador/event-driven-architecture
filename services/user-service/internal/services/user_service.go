@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
-	"user-service/internal/domain"
+	"user-service/internal/domain/entities"
 	pkgoutbox "pkg/outbox"
 	pkgevents "pkg/events"
 
@@ -21,10 +21,10 @@ func NewUserService(db *gorm.DB) *UserService {
 }
 
 // CreateUserWithEvent cria um usuário e grava o evento na outbox na mesma transação
-func (s *UserService) CreateUserWithEvent(ctx context.Context, user *domain.User) error {
+func (s *UserService) CreateUserWithEvent(ctx context.Context, user *entities.User) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		// Verifica se email já existe
-		var existingUser domain.User
+		var existingUser entities.User
 		if err := tx.Where("email = ?", user.Email).First(&existingUser).Error; err == nil {
 			return fmt.Errorf("email já cadastrado")
 		}

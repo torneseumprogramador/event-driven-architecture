@@ -3,8 +3,9 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"order-service/internal/domain"
+	"order-service/internal/domain/entities"
 	"order-service/internal/dto"
+	"order-service/internal/dto/requests"
 	"order-service/internal/services"
 	"order-service/internal/repo"
 
@@ -28,7 +29,7 @@ func NewOrderController(orderRepo repo.OrderRepository, orderService *services.O
 
 // CreateOrder cria um novo pedido
 func (c *OrderController) CreateOrder(ctx *gin.Context) {
-	var req dto.CreateOrderRequest
+	var req requests.CreateOrderRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do pedido")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
@@ -36,9 +37,9 @@ func (c *OrderController) CreateOrder(ctx *gin.Context) {
 	}
 	
 	// Cria os itens do pedido
-	items := make([]domain.OrderProduct, len(req.Items))
+	items := make([]entities.OrderProduct, len(req.Items))
 	for i, item := range req.Items {
-		items[i] = domain.OrderProduct{
+		items[i] = entities.OrderProduct{
 			ProductID: item.ProductID,
 			Quantity:  item.Quantity,
 			UnitPrice: item.UnitPrice,
@@ -46,7 +47,7 @@ func (c *OrderController) CreateOrder(ctx *gin.Context) {
 	}
 	
 	// Cria o pedido com evento na outbox
-	order := &domain.Order{
+	order := &entities.Order{
 		UserID:      req.UserID,
 		Status:      "CREATED",
 		TotalAmount: 0, // Será calculado
@@ -144,7 +145,7 @@ func (c *OrderController) UpdateOrder(ctx *gin.Context) {
 		return
 	}
 
-	var req dto.UpdateOrderRequest
+	var req requests.UpdateOrderRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do pedido")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
@@ -213,7 +214,7 @@ func (c *OrderController) CancelOrder(ctx *gin.Context) {
 		return
 	}
 	
-	var req dto.CancelOrderRequest
+	var req requests.CancelOrderRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Error().Err(err).Msg("erro ao validar dados do pedido")
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Dados inválidos", "details": err.Error()})
