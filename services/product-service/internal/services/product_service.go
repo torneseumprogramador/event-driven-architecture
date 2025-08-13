@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"product-service/internal/domain/entities"
 	"product-service/internal/repo"
-	pkgoutbox "pkg/outbox"
+	pkgoutboxservices "pkg/outbox/services"
 	pkgevents "pkg/events"
 
 	"gorm.io/gorm"
@@ -13,15 +13,17 @@ import (
 
 // ProductService serviço para gerenciar operações de produto
 type ProductService struct {
-	productRepo repo.ProductRepository
-	db          *gorm.DB // Mantido para transações
+	productRepo   repo.ProductRepository
+	outboxService *pkgoutboxservices.OutboxService
+	db            *gorm.DB // Mantido para transações
 }
 
 // NewProductService cria um novo serviço de produto
-func NewProductService(productRepo repo.ProductRepository, db *gorm.DB) *ProductService {
+func NewProductService(productRepo repo.ProductRepository, outboxService *pkgoutboxservices.OutboxService, db *gorm.DB) *ProductService {
 	return &ProductService{
-		productRepo: productRepo,
-		db:          db,
+		productRepo:   productRepo,
+		outboxService: outboxService,
+		db:            db,
 	}
 }
 
@@ -44,13 +46,13 @@ func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *en
 			},
 		}
 		
-		// Cria a mensagem da outbox
-		outboxMessage, err := pkgoutbox.CreateOutboxMessage("product", "product.created", event)
+		// Cria a mensagem da outbox usando o serviço
+		outboxMessage, err := s.outboxService.CreateMessage(ctx, "product", "product.created", event)
 		if err != nil {
 			return err
 		}
 		
-		// Grava na outbox
+		// Grava na outbox usando o repositório diretamente na transação
 		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}
@@ -90,13 +92,13 @@ func (s *ProductService) UpdateProductWithEvent(ctx context.Context, productID u
 			},
 		}
 		
-		// Cria a mensagem da outbox
-		outboxMessage, err := pkgoutbox.CreateOutboxMessage("product", "product.updated", event)
+		// Cria a mensagem da outbox usando o serviço
+		outboxMessage, err := s.outboxService.CreateMessage(ctx, "product", "product.updated", event)
 		if err != nil {
 			return err
 		}
 		
-		// Grava na outbox
+		// Grava na outbox usando o repositório diretamente na transação
 		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}

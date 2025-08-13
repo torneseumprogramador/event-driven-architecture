@@ -6,6 +6,7 @@ import (
 	"user-service/internal/domain/entities"
 	"user-service/internal/repo"
 	pkgoutbox "pkg/outbox"
+	pkgoutboxservices "pkg/outbox/services"
 	pkgevents "pkg/events"
 
 	"gorm.io/gorm"
@@ -13,15 +14,17 @@ import (
 
 // UserService serviço para gerenciar operações de usuário
 type UserService struct {
-	userRepo repo.UserRepository
-	db       *gorm.DB // Mantido para transações
+	userRepo      repo.UserRepository
+	outboxService *pkgoutboxservices.OutboxService
+	db            *gorm.DB // Mantido para transações
 }
 
 // NewUserService cria um novo serviço de usuário
-func NewUserService(userRepo repo.UserRepository, db *gorm.DB) *UserService {
+func NewUserService(userRepo repo.UserRepository, outboxService *pkgoutboxservices.OutboxService, db *gorm.DB) *UserService {
 	return &UserService{
-		userRepo: userRepo,
-		db:       db,
+		userRepo:      userRepo,
+		outboxService: outboxService,
+		db:            db,
 	}
 }
 
@@ -49,13 +52,13 @@ func (s *UserService) CreateUserWithEvent(ctx context.Context, user *entities.Us
 			},
 		}
 		
-		// Cria a mensagem da outbox
-		outboxMessage, err := pkgoutbox.CreateOutboxMessage("user", "user.created", event)
+		// Cria a mensagem da outbox usando o serviço
+		outboxMessage, err := s.outboxService.CreateMessage(ctx, "user", "user.created", event)
 		if err != nil {
 			return err
 		}
 		
-		// Grava na outbox
+		// Grava na outbox usando o repositório diretamente na transação
 		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}

@@ -13,6 +13,9 @@ import (
 	pkgkafka "pkg/kafka"
 	pkglog "pkg/log"
 	pkgoutbox "pkg/outbox"
+	pkgoutboxdispatcher "pkg/outbox/dispatcher"
+	pkgoutboxrepo "pkg/outbox/repository"
+	pkgoutboxservices "pkg/outbox/services"
 	pkghttp "pkg/http"
 
 	"github.com/gin-gonic/gin"
@@ -50,16 +53,19 @@ func main() {
 	// Inicializa repositórios
 	userRepo := repo.NewGormUserRepository(db)
 	
+	// Inicializa outbox
+	outboxRepo := pkgoutboxrepo.NewGormRepository(db)
+	outboxService := pkgoutboxservices.NewOutboxService(outboxRepo)
+	
 	// Inicializa serviços
-	userService := services.NewUserService(userRepo, db)
+	userService := services.NewUserService(userRepo, outboxService, db)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
 	defer kafkaProducer.Close()
 	
 	// Inicializa outbox dispatcher
-	outboxRepo := pkgoutbox.NewGormRepository(db)
-	outboxDispatcher := pkgoutbox.NewDispatcher(outboxRepo, kafkaProducer, time.Second)
+	outboxDispatcher := pkgoutboxdispatcher.NewOutboxDispatcher(outboxService, kafkaProducer, time.Second)
 	
 	// Inicia dispatcher em background
 	ctx, cancel := context.WithCancel(context.Background())

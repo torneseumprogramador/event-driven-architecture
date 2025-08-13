@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"order-service/internal/domain/entities"
 	"order-service/internal/repo"
-	pkgoutbox "pkg/outbox"
+	pkgoutboxservices "pkg/outbox/services"
 	pkgevents "pkg/events"
 
 	"gorm.io/gorm"
@@ -13,15 +13,17 @@ import (
 
 // OrderService serviço para gerenciar operações de pedido
 type OrderService struct {
-	orderRepo repo.OrderRepository
-	db        *gorm.DB // Mantido para transações
+	orderRepo     repo.OrderRepository
+	outboxService *pkgoutboxservices.OutboxService
+	db            *gorm.DB // Mantido para transações
 }
 
 // NewOrderService cria um novo serviço de pedido
-func NewOrderService(orderRepo repo.OrderRepository, db *gorm.DB) *OrderService {
+func NewOrderService(orderRepo repo.OrderRepository, outboxService *pkgoutboxservices.OutboxService, db *gorm.DB) *OrderService {
 	return &OrderService{
-		orderRepo: orderRepo,
-		db:        db,
+		orderRepo:     orderRepo,
+		outboxService: outboxService,
+		db:            db,
 	}
 }
 
@@ -55,13 +57,13 @@ func (s *OrderService) CreateOrderWithEvent(ctx context.Context, order *entities
 			},
 		}
 		
-		// Cria a mensagem da outbox
-		outboxMessage, err := pkgoutbox.CreateOutboxMessage("order", "order.created", event)
+		// Cria a mensagem da outbox usando o serviço
+		outboxMessage, err := s.outboxService.CreateMessage(ctx, "order", "order.created", event)
 		if err != nil {
 			return err
 		}
 		
-		// Grava na outbox
+		// Grava na outbox usando o repositório diretamente na transação
 		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}
@@ -94,13 +96,13 @@ func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) erro
 			OrderID:   orderID,
 		}
 		
-		// Cria a mensagem da outbox
-		outboxMessage, err := pkgoutbox.CreateOutboxMessage("order", "order.paid", event)
+		// Cria a mensagem da outbox usando o serviço
+		outboxMessage, err := s.outboxService.CreateMessage(ctx, "order", "order.paid", event)
 		if err != nil {
 			return err
 		}
 		
-		// Grava na outbox
+		// Grava na outbox usando o repositório diretamente na transação
 		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}
@@ -138,13 +140,13 @@ func (s *OrderService) CancelOrderWithEvent(ctx context.Context, orderID uint, r
 			Reason:    reason,
 		}
 		
-		// Cria a mensagem da outbox
-		outboxMessage, err := pkgoutbox.CreateOutboxMessage("order", "order.canceled", event)
+		// Cria a mensagem da outbox usando o serviço
+		outboxMessage, err := s.outboxService.CreateMessage(ctx, "order", "order.canceled", event)
 		if err != nil {
 			return err
 		}
 		
-		// Grava na outbox
+		// Grava na outbox usando o repositório diretamente na transação
 		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}

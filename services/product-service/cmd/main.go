@@ -13,7 +13,9 @@ import (
 	pkgconfig "pkg/config"
 	pkgkafka "pkg/kafka"
 	pkglog "pkg/log"
-	pkgoutbox "pkg/outbox"
+	pkgoutboxdispatcher "pkg/outbox/dispatcher"
+	pkgoutboxrepo "pkg/outbox/repository"
+	pkgoutboxservices "pkg/outbox/services"
 	pkghttp "pkg/http"
 	pkgidempotency "pkg/idempotency"
 
@@ -52,16 +54,19 @@ func main() {
 	// Inicializa repositórios
 	productRepo := repo.NewGormProductRepository(db)
 	
+	// Inicializa outbox
+	outboxRepo := pkgoutboxrepo.NewGormRepository(db)
+	outboxService := pkgoutboxservices.NewOutboxService(outboxRepo)
+	
 	// Inicializa serviços
-	productService := services.NewProductService(productRepo, db)
+	productService := services.NewProductService(productRepo, outboxService, db)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
 	defer kafkaProducer.Close()
 	
 	// Inicializa outbox dispatcher
-	outboxRepo := pkgoutbox.NewGormRepository(db)
-	outboxDispatcher := pkgoutbox.NewDispatcher(outboxRepo, kafkaProducer, time.Second)
+	outboxDispatcher := pkgoutboxdispatcher.NewOutboxDispatcher(outboxService, kafkaProducer, time.Second)
 	
 	// Inicializa idempotência
 	idempotencyRepo := pkgidempotency.NewGormRepository(db)
