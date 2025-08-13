@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"user-service/internal/domain/entities"
 	"user-service/internal/repo"
-	pkgoutbox "pkg/outbox"
 	pkgoutboxservices "pkg/outbox/services"
 	pkgevents "pkg/events"
 
@@ -15,12 +14,12 @@ import (
 // UserService serviço para gerenciar operações de usuário
 type UserService struct {
 	userRepo      repo.UserRepository
-	outboxService *pkgoutboxservices.OutboxService
+	outboxService pkgoutboxservices.OutboxService
 	db            *gorm.DB // Mantido para transações
 }
 
 // NewUserService cria um novo serviço de usuário
-func NewUserService(userRepo repo.UserRepository, outboxService *pkgoutboxservices.OutboxService, db *gorm.DB) *UserService {
+func NewUserService(userRepo repo.UserRepository, outboxService pkgoutboxservices.OutboxService, db *gorm.DB) *UserService {
 	return &UserService{
 		userRepo:      userRepo,
 		outboxService: outboxService,

@@ -14,12 +14,12 @@ import (
 // OrderService serviço para gerenciar operações de pedido
 type OrderService struct {
 	orderRepo     repo.OrderRepository
-	outboxService *pkgoutboxservices.OutboxService
+	outboxService pkgoutboxservices.OutboxService
 	db            *gorm.DB // Mantido para transações
 }
 
 // NewOrderService cria um novo serviço de pedido
-func NewOrderService(orderRepo repo.OrderRepository, outboxService *pkgoutboxservices.OutboxService, db *gorm.DB) *OrderService {
+func NewOrderService(orderRepo repo.OrderRepository, outboxService pkgoutboxservices.OutboxService, db *gorm.DB) *OrderService {
 	return &OrderService{
 		orderRepo:     orderRepo,
 		outboxService: outboxService,

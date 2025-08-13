@@ -12,7 +12,6 @@ import (
 	pkgconfig "pkg/config"
 	pkgkafka "pkg/kafka"
 	pkglog "pkg/log"
-	pkgoutbox "pkg/outbox"
 	pkgoutboxdispatcher "pkg/outbox/dispatcher"
 	pkgoutboxrepo "pkg/outbox/repository"
 	pkgoutboxservices "pkg/outbox/services"

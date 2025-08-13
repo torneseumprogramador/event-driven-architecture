@@ -5,29 +5,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
 	"pkg/outbox/entities"
 	"pkg/outbox/services"
 
 	"github.com/rs/zerolog/log"
 )
 
-// Producer interface para publicação no Kafka
-type Producer interface {
-	PublishEvent(ctx context.Context, topic string, event interface{}) error
-}
-
-// OutboxDispatcher processa mensagens da outbox e as publica no Kafka
-type OutboxDispatcher struct {
-	outboxService *services.OutboxService
+// OutboxDispatcherImpl implementação do dispatcher de outbox
+type OutboxDispatcherImpl struct {
+	outboxService OutboxService
 	producer      Producer
 	interval      time.Duration
 	batchSize     int
 }
 
 // NewOutboxDispatcher cria um novo dispatcher
-func NewOutboxDispatcher(outboxService *services.OutboxService, producer Producer, interval time.Duration) *OutboxDispatcher {
-	return &OutboxDispatcher{
+func NewOutboxDispatcher(outboxService OutboxService, producer Producer, interval time.Duration) OutboxDispatcher {
+	return &OutboxDispatcherImpl{
 		outboxService: outboxService,
 		producer:      producer,
 		interval:      interval,
@@ -36,7 +30,7 @@ func NewOutboxDispatcher(outboxService *services.OutboxService, producer Produce
 }
 
 // Start inicia o dispatcher em background
-func (d *OutboxDispatcher) Start(ctx context.Context) {
+func (d *OutboxDispatcherImpl) Start(ctx context.Context) {
 	log.Info().
 		Dur("interval", d.interval).
 		Int("batch_size", d.batchSize).
@@ -59,7 +53,7 @@ func (d *OutboxDispatcher) Start(ctx context.Context) {
 }
 
 // processPending processa mensagens pendentes da outbox
-func (d *OutboxDispatcher) processPending(ctx context.Context) error {
+func (d *OutboxDispatcherImpl) processPending(ctx context.Context) error {
 	messages, err := d.outboxService.GetPendingMessages(ctx, d.batchSize)
 	if err != nil {
 		return fmt.Errorf("erro ao buscar mensagens pendentes: %w", err)
@@ -111,7 +105,7 @@ func (d *OutboxDispatcher) processPending(ctx context.Context) error {
 }
 
 // processMessage processa uma mensagem individual
-func (d *OutboxDispatcher) processMessage(ctx context.Context, message entities.OutboxMessage) error {
+func (d *OutboxDispatcherImpl) processMessage(ctx context.Context, message entities.OutboxMessage) error {
 	// Determina o tópico baseado no tipo de evento
 	topic := d.getTopicForEvent(message.EventType)
 
@@ -136,18 +130,18 @@ func (d *OutboxDispatcher) processMessage(ctx context.Context, message entities.
 }
 
 // getTopicForEvent mapeia tipos de evento para tópicos
-func (d *OutboxDispatcher) getTopicForEvent(eventType string) string {
+func (d *OutboxDispatcherImpl) getTopicForEvent(eventType string) string {
 	// Mapeamento direto: user.created -> user.created
 	return eventType
 }
 
 // SetBatchSize define o tamanho do lote de processamento
-func (d *OutboxDispatcher) SetBatchSize(batchSize int) {
+func (d *OutboxDispatcherImpl) SetBatchSize(batchSize int) {
 	d.batchSize = batchSize
 }
 
 // GetStats retorna estatísticas do dispatcher
-func (d *OutboxDispatcher) GetStats(ctx context.Context) (map[string]interface{}, error) {
+func (d *OutboxDispatcherImpl) GetStats(ctx context.Context) (map[string]interface{}, error) {
 	pendingCount, err := d.outboxService.GetPendingCount(ctx)
 	if err != nil {
 		return nil, err

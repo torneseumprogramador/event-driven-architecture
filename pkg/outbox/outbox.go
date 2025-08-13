@@ -14,10 +14,8 @@ import (
 	"pkg/outbox/services"
 )
 
-// Producer interface para publicação no Kafka
-type Producer interface {
-	PublishEvent(ctx context.Context, topic string, event interface{}) error
-}
+// Producer interface para publicação no Kafka (re-exportada para compatibilidade)
+type Producer = dispatcher.Producer
 
 // CreateOutboxMessage cria uma nova mensagem de outbox (função de conveniência)
 func CreateOutboxMessage(aggregate, eventType string, payload interface{}) (*entities.OutboxMessage, error) {
@@ -44,7 +42,7 @@ func NewGormRepository(db interface{}) repository.Repository {
 }
 
 // NewDispatcher cria um novo dispatcher (função de conveniência)
-func NewDispatcher(repo repository.Repository, producer Producer, interval time.Duration) *dispatcher.OutboxDispatcher {
+func NewDispatcher(repo repository.Repository, producer Producer, interval time.Duration) dispatcher.OutboxDispatcher {
 	// Esta função é mantida para compatibilidade
 	// Em novos códigos, use dispatcher.NewOutboxDispatcher diretamente
 	outboxService := services.NewOutboxService(repo)

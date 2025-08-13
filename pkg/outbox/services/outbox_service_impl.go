@@ -5,27 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
 	"pkg/outbox/entities"
 	"pkg/outbox/repository"
 
 	"github.com/rs/zerolog/log"
 )
 
-// OutboxService serviço para gerenciar operações de outbox
-type OutboxService struct {
+// OutboxServiceImpl implementação do serviço de outbox
+type OutboxServiceImpl struct {
 	outboxRepo repository.Repository
 }
 
 // NewOutboxService cria um novo serviço de outbox
-func NewOutboxService(outboxRepo repository.Repository) *OutboxService {
-	return &OutboxService{
+func NewOutboxService(outboxRepo repository.Repository) OutboxService {
+	return &OutboxServiceImpl{
 		outboxRepo: outboxRepo,
 	}
 }
 
 // CreateMessage cria uma nova mensagem de outbox
-func (s *OutboxService) CreateMessage(ctx context.Context, aggregate, eventType string, payload interface{}) (*entities.OutboxMessage, error) {
+func (s *OutboxServiceImpl) CreateMessage(ctx context.Context, aggregate, eventType string, payload interface{}) (*entities.OutboxMessage, error) {
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("erro ao serializar payload: %w", err)
@@ -52,22 +51,22 @@ func (s *OutboxService) CreateMessage(ctx context.Context, aggregate, eventType 
 }
 
 // GetPendingMessages retorna mensagens pendentes de processamento
-func (s *OutboxService) GetPendingMessages(ctx context.Context, limit int) ([]entities.OutboxMessage, error) {
+func (s *OutboxServiceImpl) GetPendingMessages(ctx context.Context, limit int) ([]entities.OutboxMessage, error) {
 	return s.outboxRepo.GetPending(ctx, limit)
 }
 
 // MarkMessageAsProcessed marca uma mensagem como processada
-func (s *OutboxService) MarkMessageAsProcessed(ctx context.Context, id uint) error {
+func (s *OutboxServiceImpl) MarkMessageAsProcessed(ctx context.Context, id uint) error {
 	return s.outboxRepo.MarkAsProcessed(ctx, id)
 }
 
 // GetMessageByID busca uma mensagem por ID
-func (s *OutboxService) GetMessageByID(ctx context.Context, id uint) (*entities.OutboxMessage, error) {
+func (s *OutboxServiceImpl) GetMessageByID(ctx context.Context, id uint) (*entities.OutboxMessage, error) {
 	return s.outboxRepo.GetByID(ctx, id)
 }
 
 // GetPendingCount retorna o número de mensagens pendentes
-func (s *OutboxService) GetPendingCount(ctx context.Context) (int64, error) {
+func (s *OutboxServiceImpl) GetPendingCount(ctx context.Context) (int64, error) {
 	// Para implementar isso, precisaríamos adicionar um método no repositório
 	// Por enquanto, vamos buscar todas e contar
 	messages, err := s.outboxRepo.GetPending(ctx, 10000) // Número alto para pegar todas

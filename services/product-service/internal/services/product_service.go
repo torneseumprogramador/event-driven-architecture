@@ -14,12 +14,12 @@ import (
 // ProductService serviço para gerenciar operações de produto
 type ProductService struct {
 	productRepo   repo.ProductRepository
-	outboxService *pkgoutboxservices.OutboxService
+	outboxService pkgoutboxservices.OutboxService
 	db            *gorm.DB // Mantido para transações
 }
 
 // NewProductService cria um novo serviço de produto
-func NewProductService(productRepo repo.ProductRepository, outboxService *pkgoutboxservices.OutboxService, db *gorm.DB) *ProductService {
+func NewProductService(productRepo repo.ProductRepository, outboxService pkgoutboxservices.OutboxService, db *gorm.DB) *ProductService {
 	return &ProductService{
 		productRepo:   productRepo,
 		outboxService: outboxService,
