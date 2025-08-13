@@ -35,14 +35,14 @@ func CreateOutboxMessage(aggregate, eventType string, payload interface{}) (*ent
 }
 
 // NewGormRepository cria um novo repositório GORM (função de conveniência)
-func NewGormRepository(db interface{}) repository.Repository {
+func NewGormRepository(db interface{}) repository.OutboxRepository {
 	// Esta função é mantida para compatibilidade
-	// Em novos códigos, use repository.NewGormRepository diretamente
-	return repository.NewGormRepository(db.(*gorm.DB))
+	// Em novos códigos, use repository.NewGormOutboxRepository diretamente
+	return repository.NewGormOutboxRepository(db.(*gorm.DB))
 }
 
 // NewDispatcher cria um novo dispatcher (função de conveniência)
-func NewDispatcher(repo repository.Repository, producer Producer, interval time.Duration) dispatcher.OutboxDispatcher {
+func NewDispatcher(repo repository.OutboxRepository, producer Producer, interval time.Duration) dispatcher.OutboxDispatcher {
 	// Esta função é mantida para compatibilidade
 	// Em novos códigos, use dispatcher.NewOutboxDispatcher diretamente
 	outboxService := services.NewOutboxService(repo)

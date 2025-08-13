@@ -55,7 +55,7 @@ func main() {
 	productRepo := repo.NewGormProductRepository(db)
 	
 	// Inicializa outbox
-	outboxRepo := pkgoutboxrepo.NewGormRepository(db)
+	outboxRepo := pkgoutboxrepo.NewGormOutboxRepository(db)
 	outboxService := pkgoutboxservices.NewOutboxService(outboxRepo)
 	
 	// Inicializa serviços

@@ -5,8 +5,8 @@ import (
 	"pkg/outbox/entities"
 )
 
-// Repository interface para operações de outbox
-type Repository interface {
+// OutboxRepository interface para operações de outbox
+type OutboxRepository interface {
 	Save(ctx context.Context, message *entities.OutboxMessage) error
 	GetPending(ctx context.Context, limit int) ([]entities.OutboxMessage, error)
 	MarkAsProcessed(ctx context.Context, id uint) error

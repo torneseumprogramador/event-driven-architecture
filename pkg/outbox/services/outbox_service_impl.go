@@ -13,11 +13,11 @@ import (
 
 // OutboxServiceImpl implementação do serviço de outbox
 type OutboxServiceImpl struct {
-	outboxRepo repository.Repository
+	outboxRepo repository.OutboxRepository
 }
 
 // NewOutboxService cria um novo serviço de outbox
-func NewOutboxService(outboxRepo repository.Repository) OutboxService {
+func NewOutboxService(outboxRepo repository.OutboxRepository) OutboxService {
 	return &OutboxServiceImpl{
 		outboxRepo: outboxRepo,
 	}
