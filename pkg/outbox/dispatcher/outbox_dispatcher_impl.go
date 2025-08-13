@@ -6,21 +6,21 @@ import (
 	"fmt"
 	"time"
 	"pkg/outbox/entities"
-	"pkg/outbox/services"
+	pkgoutboxservices "pkg/outbox/services"
 
 	"github.com/rs/zerolog/log"
 )
 
 // OutboxDispatcherImpl implementação do dispatcher de outbox
 type OutboxDispatcherImpl struct {
-	outboxService OutboxService
+	outboxService pkgoutboxservices.OutboxService
 	producer      Producer
 	interval      time.Duration
 	batchSize     int
 }
 
 // NewOutboxDispatcher cria um novo dispatcher
-func NewOutboxDispatcher(outboxService OutboxService, producer Producer, interval time.Duration) OutboxDispatcher {
+func NewOutboxDispatcher(outboxService pkgoutboxservices.OutboxService, producer Producer, interval time.Duration) OutboxDispatcher {
 	return &OutboxDispatcherImpl{
 		outboxService: outboxService,
 		producer:      producer,

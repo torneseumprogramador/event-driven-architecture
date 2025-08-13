@@ -1,7 +1,6 @@
 package outbox
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
