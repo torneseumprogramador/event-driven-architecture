@@ -1,4 +1,4 @@
-.PHONY: help up down logs clean lint test run-user run-product run-order run-query create-topics
+.PHONY: help up down logs clean lint test run-user run-product run-order run-query create-topics test-api quick-test
 
 # Variáveis
 DOCKER_COMPOSE = docker-compose
@@ -120,3 +120,12 @@ logs-order: ## Mostra logs do order-service
 
 logs-query: ## Mostra logs do query-service
 	$(DOCKER_COMPOSE) logs -f query-service
+
+# Comandos para testes da API
+test-api: ## Executa teste interativo da API
+	@echo "Executando teste interativo da API..."
+	@./scripts/test-api.sh
+
+quick-test: ## Executa teste rápido da API
+	@echo "Executando teste rápido da API..."
+	@./scripts/quick-test.sh
