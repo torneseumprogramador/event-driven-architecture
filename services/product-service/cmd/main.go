@@ -53,7 +53,7 @@ func main() {
 	productRepo := repo.NewGormProductRepository(db)
 	
 	// Inicializa serviços
-	productService := services.NewProductService(db)
+	productService := services.NewProductService(productRepo, db)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
@@ -103,7 +103,7 @@ func main() {
 	router.GET("/healthz", pkghttp.HealthCheck())
 	
 	// Configura controllers
-	productController := controllers.NewProductController(productRepo, productService)
+	productController := controllers.NewProductController(productService)
 	
 	// Configura rotas
 	routes.SetupProductRoutes(router, productController)

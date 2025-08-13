@@ -7,7 +7,6 @@ import (
 	"order-service/internal/dto"
 	"order-service/internal/dto/requests"
 	"order-service/internal/services"
-	"order-service/internal/repo"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -15,15 +14,13 @@ import (
 
 // OrderController controller para operações de pedido
 type OrderController struct {
-	orderRepo     repo.OrderRepository
-	orderService  *services.OrderService
+	orderService *services.OrderService
 }
 
 // NewOrderController cria um novo controller de pedido
-func NewOrderController(orderRepo repo.OrderRepository, orderService *services.OrderService) *OrderController {
+func NewOrderController(orderService *services.OrderService) *OrderController {
 	return &OrderController{
-		orderRepo:     orderRepo,
-		orderService:  orderService,
+		orderService: orderService,
 	}
 }
 
@@ -112,7 +109,7 @@ func (c *OrderController) GetOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := c.orderRepo.GetByID(ctx.Request.Context(), uint(id))
+	order, err := c.orderService.GetOrderByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("order_id", uint(id)).Msg("erro ao buscar pedido")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Pedido não encontrado"})
@@ -124,7 +121,7 @@ func (c *OrderController) GetOrder(ctx *gin.Context) {
 
 // ListOrders lista todos os pedidos
 func (c *OrderController) ListOrders(ctx *gin.Context) {
-	orders, err := c.orderRepo.GetAll(ctx.Request.Context())
+	orders, err := c.orderService.GetAllOrders(ctx.Request.Context())
 	if err != nil {
 		log.Error().Err(err).Msg("erro ao listar pedidos")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
@@ -152,7 +149,7 @@ func (c *OrderController) UpdateOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := c.orderRepo.GetByID(ctx.Request.Context(), uint(id))
+	order, err := c.orderService.GetOrderByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("order_id", uint(id)).Msg("pedido não encontrado")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Pedido não encontrado"})
@@ -164,7 +161,7 @@ func (c *OrderController) UpdateOrder(ctx *gin.Context) {
 		order.Status = *req.Status
 	}
 
-	if err := c.orderRepo.Update(ctx.Request.Context(), order); err != nil {
+	if err := c.orderService.UpdateOrder(ctx.Request.Context(), order); err != nil {
 		log.Error().Err(err).Uint("order_id", uint(id)).Msg("erro ao atualizar pedido")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
 		return
@@ -187,14 +184,14 @@ func (c *OrderController) DeleteOrder(ctx *gin.Context) {
 		return
 	}
 
-	order, err := c.orderRepo.GetByID(ctx.Request.Context(), uint(id))
+	order, err := c.orderService.GetOrderByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("order_id", uint(id)).Msg("pedido não encontrado")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Pedido não encontrado"})
 		return
 	}
 
-	if err := c.orderRepo.Delete(ctx.Request.Context(), uint(id)); err != nil {
+	if err := c.orderService.DeleteOrder(ctx.Request.Context(), uint(id)); err != nil {
 		log.Error().Err(err).Uint("order_id", uint(id)).Msg("erro ao remover pedido")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
 		return

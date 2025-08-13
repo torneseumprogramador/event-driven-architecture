@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"order-service/internal/domain/entities"
+	"order-service/internal/repo"
 	pkgoutbox "pkg/outbox"
 	pkgevents "pkg/events"
 
@@ -12,28 +13,23 @@ import (
 
 // OrderService serviço para gerenciar operações de pedido
 type OrderService struct {
-	db *gorm.DB
+	orderRepo repo.OrderRepository
+	db        *gorm.DB // Mantido para transações
 }
 
 // NewOrderService cria um novo serviço de pedido
-func NewOrderService(db *gorm.DB) *OrderService {
-	return &OrderService{db: db}
+func NewOrderService(orderRepo repo.OrderRepository, db *gorm.DB) *OrderService {
+	return &OrderService{
+		orderRepo: orderRepo,
+		db:        db,
+	}
 }
 
 // CreateOrderWithEvent cria um pedido e grava o evento na outbox na mesma transação
 func (s *OrderService) CreateOrderWithEvent(ctx context.Context, order *entities.Order) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Cria o pedido
-		if err := tx.Create(order).Error; err != nil {
-			return err
-		}
-		
-		// Cria os itens do pedido
-		for i := range order.Items {
-			order.Items[i].OrderID = order.ID
-		}
-		
-		if err := tx.Create(&order.Items).Error; err != nil {
+		// Cria o pedido usando o repositório
+		if err := s.orderRepo.Create(ctx, order); err != nil {
 			return err
 		}
 		
@@ -77,9 +73,9 @@ func (s *OrderService) CreateOrderWithEvent(ctx context.Context, order *entities
 // PayOrderWithEvent paga um pedido e grava o evento na outbox na mesma transação
 func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Verifica se o pedido existe e está no status correto
-		var order entities.Order
-		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
+		// Verifica se o pedido existe e está no status correto usando o repositório
+		order, err := s.orderRepo.GetByID(ctx, orderID)
+		if err != nil {
 			return fmt.Errorf("pedido não encontrado")
 		}
 		
@@ -87,8 +83,8 @@ func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) erro
 			return fmt.Errorf("pedido não pode ser pago no status atual: %s", order.Status)
 		}
 		
-		// Atualiza o status do pedido
-		if err := tx.Model(&entities.Order{}).Where("id = ?", orderID).Update("status", "PAID").Error; err != nil {
+		// Atualiza o status do pedido usando o repositório
+		if err := s.orderRepo.UpdateStatus(ctx, orderID, "PAID"); err != nil {
 			return err
 		}
 		
@@ -116,9 +112,9 @@ func (s *OrderService) PayOrderWithEvent(ctx context.Context, orderID uint) erro
 // CancelOrderWithEvent cancela um pedido e grava o evento na outbox na mesma transação
 func (s *OrderService) CancelOrderWithEvent(ctx context.Context, orderID uint, reason string) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Verifica se o pedido existe e pode ser cancelado
-		var order entities.Order
-		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
+		// Verifica se o pedido existe e pode ser cancelado usando o repositório
+		order, err := s.orderRepo.GetByID(ctx, orderID)
+		if err != nil {
 			return fmt.Errorf("pedido não encontrado")
 		}
 		
@@ -130,8 +126,8 @@ func (s *OrderService) CancelOrderWithEvent(ctx context.Context, orderID uint, r
 			return fmt.Errorf("pedido pago não pode ser cancelado")
 		}
 		
-		// Atualiza o status do pedido
-		if err := tx.Model(&entities.Order{}).Where("id = ?", orderID).Update("status", "CANCELED").Error; err != nil {
+		// Atualiza o status do pedido usando o repositório
+		if err := s.orderRepo.UpdateStatus(ctx, orderID, "CANCELED"); err != nil {
 			return err
 		}
 		
@@ -155,4 +151,34 @@ func (s *OrderService) CancelOrderWithEvent(ctx context.Context, orderID uint, r
 		
 		return nil
 	})
+}
+
+// CreateOrder cria um pedido sem evento
+func (s *OrderService) CreateOrder(ctx context.Context, order *entities.Order) error {
+	return s.orderRepo.Create(ctx, order)
+}
+
+// GetOrderByID busca pedido por ID
+func (s *OrderService) GetOrderByID(ctx context.Context, id uint) (*entities.Order, error) {
+	return s.orderRepo.GetByID(ctx, id)
+}
+
+// GetAllOrders busca todos os pedidos
+func (s *OrderService) GetAllOrders(ctx context.Context) ([]entities.Order, error) {
+	return s.orderRepo.GetAll(ctx)
+}
+
+// UpdateOrder atualiza um pedido
+func (s *OrderService) UpdateOrder(ctx context.Context, order *entities.Order) error {
+	return s.orderRepo.Update(ctx, order)
+}
+
+// DeleteOrder remove um pedido
+func (s *OrderService) DeleteOrder(ctx context.Context, id uint) error {
+	return s.orderRepo.Delete(ctx, id)
+}
+
+// UpdateOrderStatus atualiza o status do pedido
+func (s *OrderService) UpdateOrderStatus(ctx context.Context, id uint, status string) error {
+	return s.orderRepo.UpdateStatus(ctx, id, status)
 }

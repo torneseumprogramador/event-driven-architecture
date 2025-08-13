@@ -51,7 +51,7 @@ func main() {
 	userRepo := repo.NewGormUserRepository(db)
 	
 	// Inicializa serviços
-	userService := services.NewUserService(db)
+	userService := services.NewUserService(userRepo, db)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
@@ -78,7 +78,7 @@ func main() {
 	router.GET("/healthz", pkghttp.HealthCheck())
 	
 	// Configura controllers
-	userController := controllers.NewUserController(userRepo, userService)
+	userController := controllers.NewUserController(userService)
 	
 	// Configura rotas
 	routes.SetupUserRoutes(router, userController)

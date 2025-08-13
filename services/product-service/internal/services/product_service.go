@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"product-service/internal/domain/entities"
+	"product-service/internal/repo"
 	pkgoutbox "pkg/outbox"
 	pkgevents "pkg/events"
 
@@ -12,19 +13,23 @@ import (
 
 // ProductService serviço para gerenciar operações de produto
 type ProductService struct {
-	db *gorm.DB
+	productRepo repo.ProductRepository
+	db          *gorm.DB // Mantido para transações
 }
 
 // NewProductService cria um novo serviço de produto
-func NewProductService(db *gorm.DB) *ProductService {
-	return &ProductService{db: db}
+func NewProductService(productRepo repo.ProductRepository, db *gorm.DB) *ProductService {
+	return &ProductService{
+		productRepo: productRepo,
+		db:          db,
+	}
 }
 
 // CreateProductWithEvent cria um produto e grava o evento na outbox na mesma transação
 func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *entities.Product) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Cria o produto
-		if err := tx.Create(product).Error; err != nil {
+		// Cria o produto usando o repositório
+		if err := s.productRepo.Create(ctx, product); err != nil {
 			return err
 		}
 		
@@ -57,19 +62,20 @@ func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *en
 // UpdateProductWithEvent atualiza um produto e grava o evento na outbox na mesma transação
 func (s *ProductService) UpdateProductWithEvent(ctx context.Context, productID uint, updates map[string]interface{}) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Busca o produto atual
-		var product entities.Product
-		if err := tx.Where("id = ?", productID).First(&product).Error; err != nil {
+		// Busca o produto atual usando o repositório
+		product, err := s.productRepo.GetByID(ctx, productID)
+		if err != nil {
 			return fmt.Errorf("produto não encontrado")
 		}
 		
 		// Aplica as atualizações
-		if err := tx.Model(&product).Updates(updates).Error; err != nil {
+		if err := tx.Model(product).Updates(updates).Error; err != nil {
 			return err
 		}
 		
 		// Recarrega o produto para ter os dados atualizados
-		if err := tx.First(&product, productID).Error; err != nil {
+		updatedProduct, err := s.productRepo.GetByID(ctx, productID)
+		if err != nil {
 			return err
 		}
 		
@@ -77,10 +83,10 @@ func (s *ProductService) UpdateProductWithEvent(ctx context.Context, productID u
 		event := pkgevents.ProductUpdated{
 			BaseEvent: pkgevents.NewBaseEvent(),
 			Product: pkgevents.ProductData{
-				ID:    product.ID,
-				Name:  product.Name,
-				Price: product.Price,
-				Stock: product.Stock,
+				ID:    updatedProduct.ID,
+				Name:  updatedProduct.Name,
+				Price: updatedProduct.Price,
+				Stock: updatedProduct.Stock,
 			},
 		}
 		
@@ -97,4 +103,39 @@ func (s *ProductService) UpdateProductWithEvent(ctx context.Context, productID u
 		
 		return nil
 	})
+}
+
+// CreateProduct cria um produto sem evento
+func (s *ProductService) CreateProduct(ctx context.Context, product *entities.Product) error {
+	return s.productRepo.Create(ctx, product)
+}
+
+// GetProductByID busca produto por ID
+func (s *ProductService) GetProductByID(ctx context.Context, id uint) (*entities.Product, error) {
+	return s.productRepo.GetByID(ctx, id)
+}
+
+// GetAllProducts busca todos os produtos
+func (s *ProductService) GetAllProducts(ctx context.Context) ([]entities.Product, error) {
+	return s.productRepo.GetAll(ctx)
+}
+
+// UpdateProduct atualiza um produto
+func (s *ProductService) UpdateProduct(ctx context.Context, product *entities.Product) error {
+	return s.productRepo.Update(ctx, product)
+}
+
+// DeleteProduct remove um produto
+func (s *ProductService) DeleteProduct(ctx context.Context, id uint) error {
+	return s.productRepo.Delete(ctx, id)
+}
+
+// ReserveStock reserva estoque
+func (s *ProductService) ReserveStock(ctx context.Context, productID uint, quantity int) error {
+	return s.productRepo.ReserveStock(ctx, productID, quantity)
+}
+
+// ReleaseStock libera estoque
+func (s *ProductService) ReleaseStock(ctx context.Context, productID uint, quantity int) error {
+	return s.productRepo.ReleaseStock(ctx, productID, quantity)
 }

@@ -7,7 +7,6 @@ import (
 	"product-service/internal/dto"
 	"product-service/internal/dto/requests"
 	"product-service/internal/services"
-	"product-service/internal/repo"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -15,14 +14,12 @@ import (
 
 // ProductController controller para operações de produto
 type ProductController struct {
-	productRepo    repo.ProductRepository
 	productService *services.ProductService
 }
 
 // NewProductController cria um novo controller de produto
-func NewProductController(productRepo repo.ProductRepository, productService *services.ProductService) *ProductController {
+func NewProductController(productService *services.ProductService) *ProductController {
 	return &ProductController{
-		productRepo:    productRepo,
 		productService: productService,
 	}
 }
@@ -67,7 +64,7 @@ func (c *ProductController) GetProduct(ctx *gin.Context) {
 		return
 	}
 
-	product, err := c.productRepo.GetByID(ctx.Request.Context(), uint(id))
+	product, err := c.productService.GetProductByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("product_id", uint(id)).Msg("erro ao buscar produto")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Produto não encontrado"})
@@ -79,7 +76,7 @@ func (c *ProductController) GetProduct(ctx *gin.Context) {
 
 // ListProducts lista todos os produtos
 func (c *ProductController) ListProducts(ctx *gin.Context) {
-	products, err := c.productRepo.GetAll(ctx.Request.Context())
+	products, err := c.productService.GetAllProducts(ctx.Request.Context())
 	if err != nil {
 		log.Error().Err(err).Msg("erro ao listar produtos")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
@@ -146,14 +143,14 @@ func (c *ProductController) DeleteProduct(ctx *gin.Context) {
 		return
 	}
 
-	product, err := c.productRepo.GetByID(ctx.Request.Context(), uint(id))
+	product, err := c.productService.GetProductByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("product_id", uint(id)).Msg("produto não encontrado")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Produto não encontrado"})
 		return
 	}
 
-	if err := c.productRepo.Delete(ctx.Request.Context(), uint(id)); err != nil {
+	if err := c.productService.DeleteProduct(ctx.Request.Context(), uint(id)); err != nil {
 		log.Error().Err(err).Uint("product_id", uint(id)).Msg("erro ao remover produto")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
 		return

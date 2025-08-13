@@ -51,7 +51,7 @@ func main() {
 	orderRepo := repo.NewGormOrderRepository(db)
 	
 	// Inicializa serviços
-	orderService := services.NewOrderService(db)
+	orderService := services.NewOrderService(orderRepo, db)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
@@ -78,7 +78,7 @@ func main() {
 	router.GET("/healthz", pkghttp.HealthCheck())
 	
 	// Configura controllers
-	orderController := controllers.NewOrderController(orderRepo, orderService)
+	orderController := controllers.NewOrderController(orderService)
 	
 	// Configura rotas
 	routes.SetupOrderRoutes(router, orderController)

@@ -7,7 +7,6 @@ import (
 	"user-service/internal/dto"
 	"user-service/internal/dto/requests"
 	"user-service/internal/services"
-	"user-service/internal/repo"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -15,14 +14,12 @@ import (
 
 // UserController controller para operações de usuário
 type UserController struct {
-	userRepo   repo.UserRepository
 	userService *services.UserService
 }
 
 // NewUserController cria um novo controller de usuário
-func NewUserController(userRepo repo.UserRepository, userService *services.UserService) *UserController {
+func NewUserController(userService *services.UserService) *UserController {
 	return &UserController{
-		userRepo:    userRepo,
 		userService: userService,
 	}
 }
@@ -69,7 +66,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.userRepo.GetByID(ctx.Request.Context(), uint(id))
+	user, err := c.userService.GetUserByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("user_id", uint(id)).Msg("erro ao buscar usuário")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Usuário não encontrado"})
@@ -83,7 +80,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 
 // ListUsers lista todos os usuários
 func (c *UserController) ListUsers(ctx *gin.Context) {
-	users, err := c.userRepo.GetAll(ctx.Request.Context())
+	users, err := c.userService.GetAllUsers(ctx.Request.Context())
 	if err != nil {
 		log.Error().Err(err).Msg("erro ao listar usuários")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
@@ -111,7 +108,7 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.userRepo.GetByID(ctx.Request.Context(), uint(id))
+	user, err := c.userService.GetUserByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("user_id", uint(id)).Msg("usuário não encontrado")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Usuário não encontrado"})
@@ -126,7 +123,7 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 		user.Email = req.Email
 	}
 
-	if err := c.userRepo.Update(ctx.Request.Context(), user); err != nil {
+	if err := c.userService.UpdateUser(ctx.Request.Context(), user); err != nil {
 		log.Error().Err(err).Uint("user_id", uint(id)).Msg("erro ao atualizar usuário")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
 		return
@@ -149,14 +146,14 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.userRepo.GetByID(ctx.Request.Context(), uint(id))
+	user, err := c.userService.GetUserByID(ctx.Request.Context(), uint(id))
 	if err != nil {
 		log.Error().Err(err).Uint("user_id", uint(id)).Msg("usuário não encontrado")
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "Usuário não encontrado"})
 		return
 	}
 
-	if err := c.userRepo.Delete(ctx.Request.Context(), uint(id)); err != nil {
+	if err := c.userService.DeleteUser(ctx.Request.Context(), uint(id)); err != nil {
 		log.Error().Err(err).Uint("user_id", uint(id)).Msg("erro ao remover usuário")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Erro interno do servidor"})
 		return
