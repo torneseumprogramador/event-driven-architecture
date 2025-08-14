@@ -51,14 +51,9 @@ func (s *UserService) CreateUserWithEvent(ctx context.Context, user *entities.Us
 			},
 		}
 		
-		// Cria a mensagem da outbox usando o serviço
-		outboxMessage, err := s.outboxService.CreateMessage(ctx, "user", "user.created", event)
+		// Cria a mensagem da outbox usando o serviço dentro da transação
+		_, err = s.outboxService.CreateMessageInTransaction(ctx, tx, "user", "user.created", event)
 		if err != nil {
-			return err
-		}
-		
-		// Grava na outbox usando o repositório diretamente na transação
-		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}
 		

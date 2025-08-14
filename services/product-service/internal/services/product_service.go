@@ -46,14 +46,9 @@ func (s *ProductService) CreateProductWithEvent(ctx context.Context, product *en
 			},
 		}
 		
-		// Cria a mensagem da outbox usando o serviço
-		outboxMessage, err := s.outboxService.CreateMessage(ctx, "product", "product.created", event)
+		// Cria a mensagem da outbox usando o serviço dentro da transação
+		_, err := s.outboxService.CreateMessageInTransaction(ctx, tx, "product", "product.created", event)
 		if err != nil {
-			return err
-		}
-		
-		// Grava na outbox usando o repositório diretamente na transação
-		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}
 		
@@ -92,14 +87,9 @@ func (s *ProductService) UpdateProductWithEvent(ctx context.Context, productID u
 			},
 		}
 		
-		// Cria a mensagem da outbox usando o serviço
-		outboxMessage, err := s.outboxService.CreateMessage(ctx, "product", "product.updated", event)
+		// Cria a mensagem da outbox usando o serviço dentro da transação
+		_, err = s.outboxService.CreateMessageInTransaction(ctx, tx, "product", "product.updated", event)
 		if err != nil {
-			return err
-		}
-		
-		// Grava na outbox usando o repositório diretamente na transação
-		if err := tx.Create(outboxMessage).Error; err != nil {
 			return err
 		}
 		

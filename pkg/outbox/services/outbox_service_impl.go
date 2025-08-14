@@ -9,6 +9,7 @@ import (
 	"pkg/outbox/repository"
 
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 // OutboxServiceImpl implementação do serviço de outbox
@@ -46,6 +47,39 @@ func (s *OutboxServiceImpl) CreateMessage(ctx context.Context, aggregate, eventT
 		Str("aggregate", aggregate).
 		Str("event_type", eventType).
 		Msg("mensagem criada na outbox")
+
+	return message, nil
+}
+
+// CreateMessageInTransaction cria uma nova mensagem de outbox dentro de uma transação
+func (s *OutboxServiceImpl) CreateMessageInTransaction(ctx context.Context, tx interface{}, aggregate, eventType string, payload interface{}) (*entities.OutboxMessage, error) {
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao serializar payload: %w", err)
+	}
+
+	message := &entities.OutboxMessage{
+		Aggregate: aggregate,
+		EventType: eventType,
+		Payload:   string(payloadBytes),
+		CreatedAt: time.Now(),
+	}
+
+	// Usa a transação fornecida
+	gormTx, ok := tx.(*gorm.DB)
+	if !ok {
+		return nil, fmt.Errorf("tipo de transação inválido")
+	}
+
+	if err := gormTx.WithContext(ctx).Create(message).Error; err != nil {
+		return nil, fmt.Errorf("erro ao salvar mensagem na outbox: %w", err)
+	}
+
+	log.Info().
+		Uint("message_id", message.ID).
+		Str("aggregate", aggregate).
+		Str("event_type", eventType).
+		Msg("mensagem criada na outbox (transação)")
 
 	return message, nil
 }
