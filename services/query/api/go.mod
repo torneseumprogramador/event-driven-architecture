@@ -1,4 +1,4 @@
-module query-service
+module query-api
 
 go 1.21
 
@@ -67,4 +67,4 @@ require (
 	gorm.io/gorm v1.25.5 // indirect
 )
 
-replace pkg => ../../pkg
+replace pkg => ../../../pkg

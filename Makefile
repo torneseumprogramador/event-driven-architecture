@@ -35,7 +35,7 @@ lint: ## Executa linter em todos os serviços
 	@cd services/product/consumer && $(GO) mod tidy && golangci-lint run
 	@cd services/order/api && $(GO) mod tidy && golangci-lint run
 	@cd services/order/consumer && $(GO) mod tidy && golangci-lint run
-	@cd services/query-service && $(GO) mod tidy && golangci-lint run
+	@cd services/query/api && $(GO) mod tidy && golangci-lint run
 
 test: ## Executa testes em todos os serviços
 	@echo "Executando testes..."
@@ -46,7 +46,7 @@ test: ## Executa testes em todos os serviços
 	@cd services/product/consumer && $(GO) test ./...
 	@cd services/order/api && $(GO) test ./...
 	@cd services/order/consumer && $(GO) test ./...
-	@cd services/query-service && $(GO) test ./...
+	@cd services/query/api && $(GO) test ./...
 
 # =============================================================================
 # EXECUÇÃO DE APIS
@@ -64,11 +64,11 @@ run-order-api: ## Executa a order-api
 	@echo "Executando order-api..."
 	@cd services/order/api && SERVICE_NAME=order-api PORT=8083 $(GO) run cmd/main.go
 
-run-query-service: ## Executa o query-service
-	@echo "Executando query-service..."
-	@cd services/query-service && SERVICE_NAME=query-service PORT=8084 $(GO) run cmd/main.go
+run-query-api: ## Executa a query-api
+	@echo "Executando query-api..."
+	@cd services/query/api && SERVICE_NAME=query-api PORT=8084 $(GO) run cmd/main.go
 
-run-apis: run-user-api run-product-api run-order-api run-query-service ## Executa todas as APIs
+run-apis: run-user-api run-product-api run-order-api run-query-api ## Executa todas as APIs
 
 # =============================================================================
 # EXECUÇÃO DE CONSUMERS
@@ -86,7 +86,11 @@ run-order-consumer: ## Executa o order-consumer
 	@echo "Executando order-consumer..."
 	@cd services/order/consumer && SERVICE_NAME=order-consumer $(GO) run cmd/main.go
 
-run-consumers: run-user-consumer run-product-consumer run-order-consumer ## Executa todos os consumers
+run-query-consumer: ## Executa o query-consumer
+	@echo "Executando query-consumer..."
+	@cd services/query/consumer && SERVICE_NAME=query-consumer $(GO) run cmd/main.go
+
+run-consumers: run-user-consumer run-product-consumer run-order-consumer run-query-consumer ## Executa todos os consumers
 
 # =============================================================================
 # EXECUÇÃO COMPLETA
@@ -111,11 +115,11 @@ build-order-api: ## Compila a order-api
 	@echo "Compilando order-api..."
 	@cd services/order/api && $(GO) build -o bin/order-api cmd/main.go
 
-build-query-service: ## Compila o query-service
-	@echo "Compilando query-service..."
-	@cd services/query-service && $(GO) build -o bin/query-service cmd/main.go
+build-query-api: ## Compila a query-api
+	@echo "Compilando query-api..."
+	@cd services/query/api && $(GO) build -o bin/query-api cmd/main.go
 
-build-apis: build-user-api build-product-api build-order-api build-query-service ## Compila todas as APIs
+build-apis: build-user-api build-product-api build-order-api build-query-api ## Compila todas as APIs
 
 # Build dos Consumers
 build-user-consumer: ## Compila o user-consumer
@@ -130,7 +134,11 @@ build-order-consumer: ## Compila o order-consumer
 	@echo "Compilando order-consumer..."
 	@cd services/order/consumer && $(GO) build -o bin/order-consumer cmd/main.go
 
-build-consumers: build-user-consumer build-product-consumer build-order-consumer ## Compila todos os consumers
+build-query-consumer: ## Compila o query-consumer
+	@echo "Compilando query-consumer..."
+	@cd services/query/consumer && $(GO) build -o bin/query-consumer cmd/main.go
+
+build-consumers: build-user-consumer build-product-consumer build-order-consumer build-query-consumer ## Compila todos os consumers
 
 build-all: build-apis build-consumers ## Compila todos os serviços
 
@@ -159,7 +167,7 @@ health: ## Verifica healthcheck de todas as APIs
 	@curl -s http://localhost:8081/healthz || echo "user-api: ❌"
 	@curl -s http://localhost:8082/healthz || echo "product-api: ❌"
 	@curl -s http://localhost:8083/healthz || echo "order-api: ❌"
-	@curl -s http://localhost:8084/healthz || echo "query-service: ❌"
+	@curl -s http://localhost:8084/healthz || echo "query-api: ❌"
 
 # =============================================================================
 # LOGS ESPECÍFICOS
@@ -185,8 +193,8 @@ logs-product-api: ## Mostra logs da product-api
 logs-order-api: ## Mostra logs da order-api
 	$(DOCKER_COMPOSE) logs -f order-api
 
-logs-query-service: ## Mostra logs do query-service
-	$(DOCKER_COMPOSE) logs -f query-service
+logs-query-api: ## Mostra logs do query-api
+	@echo "Query API não roda no Docker, use: ps aux | grep query-api"
 
 # Logs dos Consumers (quando em Docker)
 logs-user-consumer: ## Mostra logs do user-consumer
@@ -197,6 +205,9 @@ logs-product-consumer: ## Mostra logs do product-consumer
 
 logs-order-consumer: ## Mostra logs do order-consumer
 	$(DOCKER_COMPOSE) logs -f order-consumer
+
+logs-query-consumer: ## Mostra logs do query-consumer
+	@echo "Query Consumer não roda no Docker, use: ps aux | grep query-consumer"
 
 # =============================================================================
 # TESTES

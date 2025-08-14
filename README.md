@@ -18,7 +18,7 @@ Um sistema de e-commerce completo construído com **Event-Driven Architecture (E
 
 ### Diagrama da Arquitetura
 
-![Diagrama da Arquitetura](diagrama-arquitetura2.png)
+![Diagrama da Arquitetura](diagrama-arquitetura3.png)
 
 ### Visão Geral
 
@@ -265,22 +265,37 @@ event-driven-architecture/
 │   │       │       └── order_service.go
 │   │       └── cmd/
 │   │           └── main.go
-│   └── query-service/               # Serviço de consultas (Port: 8084)
-│       ├── internal/
-│       │   ├── domain/
-│       │   │   └── entities/        # Entidades de domínio
-│       │   │       └── views.go
-│       │   ├── dto/
-│       │   │   ├── requests/        # DTOs de entrada
-│       │   │   └── responses/       # DTOs de saída
-│       │   ├── api/
+│   └── query/                       # Domínio de consultas
+│       ├── api/                     # API HTTP (Port: 8084)
+│       │   ├── internal/
+│       │   │   ├── domain/
+│       │   │   │   └── entities/    # Entidades de domínio
+│       │   │   │       └── views.go
+│       │   │   ├── dto/
+│       │   │   │   └── responses/   # DTOs de saída
+│       │   │   │       ├── user.go
+│       │   │   │       ├── product.go
+│       │   │   │       └── order.go
 │       │   │   ├── controllers/     # Controllers HTTP
-│       │   │   └── routes/          # Configuração de rotas
-│       │   ├── repo/                # Repositórios MongoDB
-│       │   ├── services/            # Serviços de domínio
-│       │   └── consumer/            # Consumidores de eventos
-│       └── cmd/
-│           └── main.go
+│       │   │   │   └── query_controller.go
+│       │   │   ├── repo/            # Repositórios MongoDB
+│       │   │   │   ├── user_repository.go
+│       │   │   │   ├── product_repository.go
+│       │   │   │   └── order_repository.go
+│       │   │   └── services/        # Serviços de domínio
+│       │   │       └── query_service.go
+│       │   └── cmd/
+│       │       └── main.go
+│       └── consumer/                # Consumer Kafka
+│           ├── internal/
+│           │   ├── consumer/        # Consumidores de eventos
+│           │   │   └── event_consumer.go
+│           │   └── projections/     # Projeções MongoDB
+│           │       ├── user_projection.go
+│           │       ├── product_projection.go
+│           │       └── order_projection.go
+│           └── cmd/
+│               └── main.go
 ├── docker-compose.yml               # Orquestração Docker
 ├── go.work                          # Workspace Go
 ├── Makefile                         # Comandos de automação
@@ -352,8 +367,8 @@ make run-product-api
 # Terminal 3 - Order API
 make run-order-api
 
-# Terminal 4 - Query Service
-make run-query-service
+# Terminal 4 - Query API
+make run-query-api
 
 # Terminal 5 - User Consumer
 make run-user-consumer
@@ -363,6 +378,9 @@ make run-product-consumer
 
 # Terminal 7 - Order Consumer
 make run-order-consumer
+
+# Terminal 8 - Query Consumer
+make run-query-consumer
 ```
 
 ### 5. Verifique os Serviços
@@ -370,7 +388,7 @@ make run-order-consumer
 - **User API**: http://localhost:8081
 - **Product API**: http://localhost:8082
 - **Order API**: http://localhost:8083
-- **Query Service**: http://localhost:8084
+- **Query API**: http://localhost:8084
 - **Kafka UI**: http://localhost:8080
 - **Mongo Express**: http://localhost:8085
 
@@ -395,6 +413,82 @@ make run-order-consumer
 #### 🛡️ **Isolamento de Falhas**
 - Falha no consumer não afeta a API
 - Falha na API não afeta o processamento de eventos
+
+### 7. Reorganização do Query Service
+
+#### 🏗️ **Estrutura Anterior (Cavalo de Troia)**
+```
+query-service/
+├── internal/
+│   ├── api/          # HTTP + Kafka misturados
+│   ├── consumer/     # Consumidores Kafka
+│   └── projections/  # Projeções MongoDB
+```
+
+#### 🎯 **Estrutura Atual (Enterprise-Grade)**
+```
+query/
+├── api/              # 🚀 Apenas HTTP (Port: 8084)
+│   ├── controllers/  # Controllers HTTP
+│   ├── services/     # Serviços de negócio
+│   ├── repo/         # Repositórios MongoDB
+│   ├── dto/          # DTOs de resposta
+│   └── domain/       # Entidades de domínio
+└── consumer/         # Apenas Kafka
+    ├── consumer/     # Consumidores de eventos
+    └── projections/  # Projeções MongoDB
+```
+
+#### ✅ **Benefícios da Reorganização**
+- **Separação clara** entre leitura (API) e processamento (Consumer)
+- **Estrutura padronizada** seguindo o padrão dos outros serviços
+- **Escalabilidade independente** da API e Consumer
+- **Manutenibilidade** melhorada com responsabilidades bem definidas
+
+### 8. Endpoints da Query API
+
+#### 🔍 **Consulta de Usuários**
+```bash
+# Listar todos os usuários
+GET http://localhost:8084/q/users
+
+# Buscar usuário por ID
+GET http://localhost:8084/q/users/{id}
+```
+
+#### 📦 **Consulta de Produtos**
+```bash
+# Listar todos os produtos
+GET http://localhost:8084/q/products
+
+# Buscar produto por ID
+GET http://localhost:8084/q/products/{id}
+```
+
+#### 🛒 **Consulta de Pedidos**
+```bash
+# Listar todos os pedidos
+GET http://localhost:8084/q/orders
+
+# Buscar pedido por ID
+GET http://localhost:8084/q/orders/{id}
+```
+
+#### 📊 **Exemplo de Resposta**
+```json
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Danilo",
+      "email": "danilo@teste.com",
+      "created_at": "2025-08-13T09:07:50.089Z",
+      "updated_at": "2025-08-14T09:42:28.482Z"
+    }
+  ],
+  "total": 1
+}
+```
 
 ## 📚 Padrões Implementados
 
@@ -457,6 +551,33 @@ CREATE TABLE processed_events (
 - Máximo 5 tentativas
 - Delay: 1s, 2s, 4s, 8s, 16s
 - Dead Letter Queue para falhas persistentes
+
+### 6. API/Consumer Separation Pattern
+
+**Princípio**: Separação clara entre APIs HTTP e Consumers Kafka para melhor escalabilidade.
+
+**Implementação**:
+```
+services/
+├── user/
+│   ├── api/          # 🚀 Apenas HTTP (Port: 8081)
+│   └── consumer/     # Apenas Kafka
+├── product/
+│   ├── api/          # 🚀 Apenas HTTP (Port: 8082)
+│   └── consumer/     # Apenas Kafka
+├── order/
+│   ├── api/          # 🚀 Apenas HTTP (Port: 8083)
+│   └── consumer/     # Apenas Kafka
+└── query/
+    ├── api/          # 🚀 Apenas HTTP (Port: 8084)
+    └── consumer/     # Apenas Kafka
+```
+
+**Benefícios**:
+- **Escalabilidade independente**: APIs e Consumers podem escalar separadamente
+- **Deployments isolados**: Mudanças na API não afetam o Consumer e vice-versa
+- **Monitoramento específico**: Métricas HTTP vs Métricas Kafka
+- **Isolamento de falhas**: Falha em um não afeta o outro
 
 ## 🔧 Configuração
 
@@ -726,10 +847,11 @@ make run-consumers     # Todos os consumers
 make run-user-api      # User API
 make run-product-api   # Product API
 make run-order-api     # Order API
-make run-query-service # Query Service
+make run-query-api     # Query API
 make run-user-consumer # User Consumer
 make run-product-consumer # Product Consumer
 make run-order-consumer   # Order Consumer
+make run-query-consumer   # Query Consumer
 ```
 
 ### Manutenção

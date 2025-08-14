@@ -8,5 +8,6 @@ use (
 	./services/product/consumer
 	./services/order/api
 	./services/order/consumer
-	./services/query-service
+	./services/query/api
+	./services/query/consumer
 )

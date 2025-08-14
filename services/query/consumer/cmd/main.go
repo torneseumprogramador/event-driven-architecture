@@ -2,17 +2,13 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"query-service/internal/api"
-	"query-service/internal/consumer"
-	"query-service/internal/projections"
+	"query-consumer/internal/consumer"
+	"query-consumer/internal/projections"
 	pkgconfig "pkg/config"
 	pkgkafka "pkg/kafka"
 	pkglog "pkg/log"
-	pkghttp "pkg/http"
 	pkgidempotency "pkg/idempotency"
 
-	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,8 +26,7 @@ func main() {
 	
 	log.Info().
 		Str("service", config.ServiceName).
-		Int("port", config.Port).
-		Msg("iniciando query-service")
+		Msg("iniciando query-consumer")
 	
 	// Conecta ao MongoDB
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(config.MongoURI))
@@ -75,95 +70,62 @@ func main() {
 	
 	// Consumidor de user.created
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "user.created", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "user.created", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleUserCreated)
 	}()
 	
 	// Consumidor de product.created
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "product.created", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "product.created", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleProductCreated)
 	}()
 	
 	// Consumidor de product.updated
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "product.updated", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "product.updated", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleProductUpdated)
 	}()
 	
 	// Consumidor de order.created
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "order.created", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "order.created", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleOrderCreated)
 	}()
 	
 	// Consumidor de order.paid
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "order.paid", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "order.paid", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleOrderPaid)
 	}()
 	
 	// Consumidor de order.canceled
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "order.canceled", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "order.canceled", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleOrderCanceled)
 	}()
 	
 	// Consumidor de stock.reserved
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "stock.reserved", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "stock.reserved", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleStockReserved)
 	}()
 	
 	// Consumidor de stock.released
 	go func() {
-		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "stock.released", "query-service", kafkaProducer)
+		consumer := pkgkafka.NewConsumer(config.GetKafkaBrokers(), "stock.released", "query-consumer", kafkaProducer)
 		defer consumer.Close()
 		consumer.Consume(ctx, eventConsumer.HandleStockReleased)
 	}()
 	
-	// Configura Gin
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
+	log.Info().Msg("query-consumer iniciado")
 	
-	// Middlewares
-	router.Use(pkghttp.Logger())
-	router.Use(pkghttp.Recovery())
-	
-	// Healthcheck
-	router.GET("/healthz", pkghttp.HealthCheck())
-	
-	// Handlers
-	queryHandler := api.NewQueryHandler(orderProjection, productProjection, userProjection)
-	
-	// Rotas
-	api := router.Group("/q")
-	{
-		orders := api.Group("/orders")
-		{
-			orders.GET("/:id", queryHandler.GetOrder)
-			orders.GET("", queryHandler.GetOrders)
-		}
-		products := api.Group("/products")
-		{
-			products.GET("", queryHandler.GetProducts)
-		}
-		users := api.Group("/users")
-		{
-			users.GET("", queryHandler.GetUsers)
-		}
-	}
-	
-	// Inicia servidor
-	log.Info().Msg("servidor iniciado")
-	if err := router.Run(fmt.Sprintf(":%d", config.Port)); err != nil {
-		log.Fatal().Err(err).Msg("erro ao iniciar servidor")
-	}
+	// Aguarda indefinidamente
+	select {}
 }
