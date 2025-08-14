@@ -3,8 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
-	"order-service/internal/domain/entities"
-	"order-service/internal/repo"
+	"order-api/internal/domain/entities"
+	"order-api/internal/repo"
 	pkgoutboxservices "pkg/outbox/services"
 	pkgevents "pkg/events"
 

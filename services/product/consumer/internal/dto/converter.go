@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"product-service/internal/domain/entities"
-	"product-service/internal/dto/responses"
+	"product-consumer/internal/domain/entities"
+	"product-consumer/internal/dto/responses"
 )
 
 // ToProductResponse converte Product para ProductResponse

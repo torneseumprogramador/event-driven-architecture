@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"user-service/internal/domain/entities"
-	"user-service/internal/dto/responses"
+	"user-api/internal/domain/entities"
+	"user-api/internal/dto/responses"
 )
 
 // ToUserResponse converte User para UserResponse

@@ -3,10 +3,10 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"order-service/internal/domain/entities"
-	"order-service/internal/dto"
-	"order-service/internal/dto/requests"
-	"order-service/internal/services"
+	"order-api/internal/domain/entities"
+	"order-api/internal/dto"
+	"order-api/internal/dto/requests"
+	"order-api/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"

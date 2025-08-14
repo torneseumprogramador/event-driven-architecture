@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"order-service/internal/domain/entities"
-	"order-service/internal/dto/responses"
+	"order-consumer/internal/domain/entities"
+	"order-consumer/internal/dto/responses"
 )
 
 // ToOrderResponse converte Order para OrderResponse

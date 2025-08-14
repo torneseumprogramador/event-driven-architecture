@@ -42,8 +42,8 @@ func main() {
 		log.Fatal().Err(err).Msg("erro ao migrar tabelas")
 	}
 	
-	// Inicializa repositórios
-	orderRepo := repo.NewGormOrderRepository(db)
+	// Inicializa repositórios (para futuras funcionalidades)
+	_ = repo.NewGormOrderRepository(db)
 	
 	// Inicializa outbox
 	outboxRepo := pkgoutboxrepo.NewGormOutboxRepository(db)

@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"user-service/internal/api/controllers"
+	"user-consumer/internal/api/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
-// SetupUserRoutes configura as rotas do user-service
+// SetupUserRoutes configura as rotas do user-consumer
 func SetupUserRoutes(r *gin.Engine, userController *controllers.UserController) {
 	// Rota home
 	r.GET("/", func(c *gin.Context) {
@@ -20,7 +20,7 @@ func SetupUserRoutes(r *gin.Engine, userController *controllers.UserController) 
 		}
 		
 		c.JSON(200, gin.H{
-			"service": "user-service",
+			"service": "user-consumer",
 			"version": "1.0.0",
 			"status":  "running",
 			"endpoints": endpoints,

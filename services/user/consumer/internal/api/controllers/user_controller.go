@@ -3,10 +3,10 @@ package controllers
 import (
 	"net/http"
 	"strconv"
-	"user-service/internal/domain/entities"
-	"user-service/internal/dto"
-	"user-service/internal/dto/requests"
-	"user-service/internal/services"
+	"user-consumer/internal/domain/entities"
+	"user-consumer/internal/dto"
+	"user-consumer/internal/dto/requests"
+	"user-consumer/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"

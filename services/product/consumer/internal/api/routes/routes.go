@@ -1,12 +1,12 @@
 package routes
 
 import (
-	"product-service/internal/api/controllers"
+	"product-consumer/internal/api/controllers"
 
 	"github.com/gin-gonic/gin"
 )
 
-// SetupProductRoutes configura as rotas do product-service
+// SetupProductRoutes configura as rotas do product-consumer
 func SetupProductRoutes(r *gin.Engine, productController *controllers.ProductController) {
 	// Rota home
 	r.GET("/", func(c *gin.Context) {
@@ -20,7 +20,7 @@ func SetupProductRoutes(r *gin.Engine, productController *controllers.ProductCon
 		}
 		
 		c.JSON(200, gin.H{
-			"service": "product-service",
+			"service": "product-consumer",
 			"version": "1.0.0",
 			"status":  "running",
 			"endpoints": endpoints,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"product-service/internal/repo"
+	"product-consumer/internal/repo"
 	pkgkafka "pkg/kafka"
 	pkgevents "pkg/events"
 	pkgidempotency "pkg/idempotency"

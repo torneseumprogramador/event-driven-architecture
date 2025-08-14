@@ -2,7 +2,7 @@ package repo
 
 import (
 	"context"
-	"user-service/internal/domain/entities"
+	"user-api/internal/domain/entities"
 
 	"gorm.io/gorm"
 )

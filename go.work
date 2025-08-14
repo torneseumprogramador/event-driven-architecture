@@ -2,8 +2,11 @@ go 1.21
 
 use (
 	./pkg
-	./services/order-service
-	./services/product-service
+	./services/user/api
+	./services/user/consumer
+	./services/product/api
+	./services/product/consumer
+	./services/order/api
+	./services/order/consumer
 	./services/query-service
-	./services/user-service
 )
