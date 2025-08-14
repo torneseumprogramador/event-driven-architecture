@@ -16,6 +16,10 @@ Um sistema de e-commerce completo construído com **Event-Driven Architecture (E
 
 ## 🏗️ Arquitetura
 
+### Diagrama da Arquitetura
+
+![Diagrama da Arquitetura](diagrama-arquitetura.png)
+
 ### Visão Geral
 
 ```
