@@ -24,8 +24,8 @@ Um sistema de e-commerce completo construído com **Event-Driven Architecture (E
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Service  │    │ Product Service │    │  Order Service  │    │  Query Service  │
-│   (Write Model) │    │   (Write Model) │    │   (Write Model) │    │   (Read Model)  │
+│   User API      │    │ Product API     │    │  Order API      │    │  Query Service  │
+│   (HTTP Only)   │    │   (HTTP Only)   │    │   (HTTP Only)   │    │   (Read Model)  │
 └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │                       │
          └───────────────────────┼───────────────────────┼───────────────────────┘
@@ -53,6 +53,34 @@ Um sistema de e-commerce completo construído com **Event-Driven Architecture (E
                     │  │ views.users │ │views.products│ │ views.orders│          │
                     │  └─────────────┘ └─────────────┘ └─────────────┘          │
                     └─────────────────────────────────────────────────────────────┘
+```
+
+### Arquitetura Separada: APIs e Consumers
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              APIS (HTTP Only)                                   │
+├─────────────────┬─────────────────┬─────────────────┬─────────────────────────┤
+│   User API      │  Product API    │   Order API     │    Query Service        │
+│   Port: 8081    │   Port: 8082    │   Port: 8083    │    Port: 8084          │
+│   - HTTP        │   - HTTP        │   - HTTP        │    - HTTP               │
+│   - Outbox      │   - Outbox      │   - Outbox      │    - MongoDB            │
+│   - MySQL       │   - MySQL       │   - MySQL       │    - Views              │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────────────┘
+                                 │
+                    ┌─────────────────────────────────────────────────────────────┐
+                    │                        Kafka                                │
+                    └─────────────────────────────────────────────────────────────┘
+                                 │
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                            CONSUMERS (Kafka Only)                               │
+├─────────────────┬─────────────────┬─────────────────┬─────────────────────────┤
+│User Consumer    │Product Consumer │Order Consumer   │    Query Service        │
+│- Kafka          │- Kafka          │- Kafka          │    - Kafka              │
+│- Outbox         │- Outbox         │- Outbox         │    - MongoDB            │
+│- Dispatcher     │- Dispatcher     │- Dispatcher     │    - Views              │
+│- MySQL          │- MySQL          │- MySQL          │    - Projections        │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────────────┘
 ```
 
 ### Fluxo de Dados
@@ -125,82 +153,119 @@ event-driven-architecture/
 │   ├── log/                         # Logging
 │   └── http/                        # Utilitários HTTP
 ├── services/                        # Microserviços
-│   ├── user-service/                # Serviço de usuários
-│   │   ├── internal/
-│   │   │   ├── domain/
-│   │   │   │   └── entities/        # Entidades de domínio
-│   │   │   │       └── user.go
-│   │   │   ├── dto/
-│   │   │   │   ├── requests/        # DTOs de entrada
-│   │   │   │   │   ├── create_user.go
-│   │   │   │   │   └── update_user.go
-│   │   │   │   ├── responses/       # DTOs de saída
-│   │   │   │   │   └── user.go
-│   │   │   │   └── converter.go     # Conversores DTO
-│   │   │   ├── api/
-│   │   │   │   ├── controllers/     # Controllers HTTP
-│   │   │   │   │   └── user_controller.go
-│   │   │   │   └── routes/          # Configuração de rotas
-│   │   │   │       └── routes.go
-│   │   │   ├── repo/                # Repositórios
-│   │   │   │   └── user_repository.go
-│   │   │   └── services/            # Serviços de domínio
-│   │   │       └── user_service.go
-│   │   └── cmd/
-│   │       └── main.go
-│   ├── product-service/             # Serviço de produtos
-│   │   ├── internal/
-│   │   │   ├── domain/
-│   │   │   │   └── entities/        # Entidades de domínio
-│   │   │   │       └── product.go
-│   │   │   ├── dto/
-│   │   │   │   ├── requests/        # DTOs de entrada
-│   │   │   │   │   ├── create_product.go
-│   │   │   │   │   └── update_product.go
-│   │   │   │   ├── responses/       # DTOs de saída
-│   │   │   │   │   └── product.go
-│   │   │   │   └── converter.go     # Conversores DTO
-│   │   │   ├── api/
-│   │   │   │   ├── controllers/     # Controllers HTTP
-│   │   │   │   │   └── product_controller.go
-│   │   │   │   └── routes/          # Configuração de rotas
-│   │   │   │       └── routes.go
-│   │   │   ├── repo/                # Repositórios
-│   │   │   │   └── product_repository.go
-│   │   │   ├── services/            # Serviços de domínio
-│   │   │   │   └── product_service.go
-│   │   │   └── consumer/            # Consumidores de eventos
-│   │   │       └── order_consumer.go
-│   │   └── cmd/
-│   │       └── main.go
-│   ├── order-service/               # Serviço de pedidos
-│   │   ├── internal/
-│   │   │   ├── domain/
-│   │   │   │   └── entities/        # Entidades de domínio
-│   │   │   │   ├── order.go
-│   │   │   │   └── order_product.go
-│   │   │   ├── dto/
-│   │   │   │   ├── requests/        # DTOs de entrada
-│   │   │   │   │   ├── create_order.go
-│   │   │   │   │   ├── update_order.go
-│   │   │   │   │   ├── pay_order.go
-│   │   │   │   │   └── cancel_order.go
-│   │   │   │   ├── responses/       # DTOs de saída
+│   ├── user/                        # Domínio de usuários
+│   │   ├── api/                     # API HTTP (Port: 8081)
+│   │   │   ├── internal/
+│   │   │   │   ├── domain/
+│   │   │   │   │   └── entities/    # Entidades de domínio
+│   │   │   │   │       └── user.go
+│   │   │   │   ├── dto/
+│   │   │   │   │   ├── requests/    # DTOs de entrada
+│   │   │   │   │   │   ├── create_user.go
+│   │   │   │   │   │   └── update_user.go
+│   │   │   │   │   ├── responses/   # DTOs de saída
+│   │   │   │   │   │   └── user.go
+│   │   │   │   │   └── converter.go # Conversores DTO
+│   │   │   │   ├── api/
+│   │   │   │   │   ├── controllers/ # Controllers HTTP
+│   │   │   │   │   │   └── user_controller.go
+│   │   │   │   │   └── routes/      # Configuração de rotas
+│   │   │   │   │       └── routes.go
+│   │   │   │   ├── repo/            # Repositórios
+│   │   │   │   │   └── user_repository.go
+│   │   │   │   └── services/        # Serviços de domínio
+│   │   │   │       └── user_service.go
+│   │   │   └── cmd/
+│   │   │       └── main.go
+│   │   └── consumer/                # Consumer Kafka
+│   │       ├── internal/
+│   │       │   ├── domain/
+│   │       │   │   └── entities/    # Entidades de domínio
+│   │       │   │       └── user.go
+│   │       │   ├── repo/            # Repositórios
+│   │       │   │   └── user_repository.go
+│   │       │   └── services/        # Serviços de domínio
+│   │       │       └── user_service.go
+│   │       └── cmd/
+│   │           └── main.go
+│   ├── product/                     # Domínio de produtos
+│   │   ├── api/                     # API HTTP (Port: 8082)
+│   │   │   ├── internal/
+│   │   │   │   ├── domain/
+│   │   │   │   │   └── entities/    # Entidades de domínio
+│   │   │   │   │       └── product.go
+│   │   │   │   ├── dto/
+│   │   │   │   │   ├── requests/    # DTOs de entrada
+│   │   │   │   │   │   ├── create_product.go
+│   │   │   │   │   │   └── update_product.go
+│   │   │   │   │   ├── responses/   # DTOs de saída
+│   │   │   │   │   │   └── product.go
+│   │   │   │   │   └── converter.go # Conversores DTO
+│   │   │   │   ├── api/
+│   │   │   │   │   ├── controllers/ # Controllers HTTP
+│   │   │   │   │   │   └── product_controller.go
+│   │   │   │   │   └── routes/      # Configuração de rotas
+│   │   │   │   │       └── routes.go
+│   │   │   │   ├── repo/            # Repositórios
+│   │   │   │   │   └── product_repository.go
+│   │   │   │   └── services/        # Serviços de domínio
+│   │   │   │       └── product_service.go
+│   │   │   └── cmd/
+│   │   │       └── main.go
+│   │   └── consumer/                # Consumer Kafka
+│   │       ├── internal/
+│   │       │   ├── domain/
+│   │       │   │   └── entities/    # Entidades de domínio
+│   │       │   │       └── product.go
+│   │       │   ├── consumer/        # Consumidores de eventos
+│   │       │   │   └── order_consumer.go
+│   │       │   ├── repo/            # Repositórios
+│   │       │   │   └── product_repository.go
+│   │       │   └── services/        # Serviços de domínio
+│   │       │       └── product_service.go
+│   │       └── cmd/
+│   │           └── main.go
+│   ├── order/                       # Domínio de pedidos
+│   │   ├── api/                     # API HTTP (Port: 8083)
+│   │   │   ├── internal/
+│   │   │   │   ├── domain/
+│   │   │   │   │   └── entities/    # Entidades de domínio
 │   │   │   │   │   ├── order.go
-│   │   │   │   │   └── order_item.go
-│   │   │   │   └── converter.go     # Conversores DTO
-│   │   │   ├── api/
-│   │   │   │   ├── controllers/     # Controllers HTTP
-│   │   │   │   │   └── order_controller.go
-│   │   │   │   └── routes/          # Configuração de rotas
-│   │   │   │       └── routes.go
-│   │   │   ├── repo/                # Repositórios
-│   │   │   │   └── order_repository.go
-│   │   │   └── services/            # Serviços de domínio
-│   │   │       └── order_service.go
-│   │   └── cmd/
-│   │       └── main.go
-│   └── query-service/               # Serviço de consultas
+│   │   │   │   │   └── order_product.go
+│   │   │   │   ├── dto/
+│   │   │   │   │   ├── requests/    # DTOs de entrada
+│   │   │   │   │   │   ├── create_order.go
+│   │   │   │   │   │   ├── update_order.go
+│   │   │   │   │   │   ├── pay_order.go
+│   │   │   │   │   │   └── cancel_order.go
+│   │   │   │   │   ├── responses/   # DTOs de saída
+│   │   │   │   │   │   ├── order.go
+│   │   │   │   │   │   └── order_item.go
+│   │   │   │   │   └── converter.go # Conversores DTO
+│   │   │   │   ├── api/
+│   │   │   │   │   ├── controllers/ # Controllers HTTP
+│   │   │   │   │   │   └── order_controller.go
+│   │   │   │   │   └── routes/      # Configuração de rotas
+│   │   │   │   │       └── routes.go
+│   │   │   │   ├── repo/            # Repositórios
+│   │   │   │   │   └── order_repository.go
+│   │   │   │   └── services/        # Serviços de domínio
+│   │   │   │       └── order_service.go
+│   │   │   └── cmd/
+│   │   │       └── main.go
+│   │   └── consumer/                # Consumer Kafka
+│   │       ├── internal/
+│   │       │   ├── domain/
+│   │       │   │   └── entities/    # Entidades de domínio
+│   │       │   │   ├── order.go
+│   │       │   │   └── order_product.go
+│   │       │   ├── repo/            # Repositórios
+│   │       │   │   └── order_repository.go
+│   │       │   └── services/        # Serviços de domínio
+│   │       │       └── order_service.go
+│   │       └── cmd/
+│   │           └── main.go
+│   └── query-service/               # Serviço de consultas (Port: 8084)
 │       ├── internal/
 │       │   ├── domain/
 │       │   │   └── entities/        # Entidades de domínio
@@ -258,28 +323,78 @@ Este comando irá:
 
 ### 4. Execute os Serviços
 
+#### Opção 1: Executar Tudo (APIs + Consumers)
 ```bash
-# Terminal 1 - User Service
-make run-user
+# Executa todas as APIs e Consumers em terminais separados
+make run-all
+```
 
-# Terminal 2 - Product Service  
-make run-product
+#### Opção 2: Executar Apenas APIs
+```bash
+# Executa todas as APIs (HTTP)
+make run-apis
+```
 
-# Terminal 3 - Order Service
-make run-order
+#### Opção 3: Executar Apenas Consumers
+```bash
+# Executa todos os consumers (Kafka)
+make run-consumers
+```
+
+#### Opção 4: Executar Serviços Individualmente
+```bash
+# Terminal 1 - User API
+make run-user-api
+
+# Terminal 2 - Product API  
+make run-product-api
+
+# Terminal 3 - Order API
+make run-order-api
 
 # Terminal 4 - Query Service
-make run-query
+make run-query-service
+
+# Terminal 5 - User Consumer
+make run-user-consumer
+
+# Terminal 6 - Product Consumer
+make run-product-consumer
+
+# Terminal 7 - Order Consumer
+make run-order-consumer
 ```
 
 ### 5. Verifique os Serviços
 
-- **User Service**: http://localhost:8081
-- **Product Service**: http://localhost:8082
-- **Order Service**: http://localhost:8083
+- **User API**: http://localhost:8081
+- **Product API**: http://localhost:8082
+- **Order API**: http://localhost:8083
 - **Query Service**: http://localhost:8084
 - **Kafka UI**: http://localhost:8080
 - **Mongo Express**: http://localhost:8085
+
+### 6. Benefícios da Separação APIs/Consumers
+
+#### 🚀 **Escalabilidade Independente**
+- **APIs**: Podem escalar horizontalmente para alta demanda HTTP
+- **Consumers**: Podem escalar independentemente para processamento de eventos
+
+#### ⚡ **Performance Otimizada**
+- **APIs**: Foco em HTTP, sem overhead do consumer
+- **Consumers**: Foco em processamento de eventos Kafka
+
+#### 🔧 **Deployments Independentes**
+- **APIs**: Deploy rápido para correções HTTP
+- **Consumers**: Deploy independente para lógica de eventos
+
+#### 📊 **Monitoramento Específico**
+- **APIs**: Métricas HTTP (requests, latência, erros)
+- **Consumers**: Métricas Kafka (lag, throughput, processamento)
+
+#### 🛡️ **Isolamento de Falhas**
+- Falha no consumer não afeta a API
+- Falha na API não afeta o processamento de eventos
 
 ## 📚 Padrões Implementados
 
@@ -598,10 +713,23 @@ make restart     # Reiniciar serviços
 
 ### Desenvolvimento
 ```bash
-make run-user    # Executar user-service
-make run-product # Executar product-service
-make run-order   # Executar order-service
-make run-query   # Executar query-service
+# Executar tudo
+make run-all           # APIs + Consumers
+
+# Executar apenas APIs
+make run-apis          # Todas as APIs
+
+# Executar apenas consumers
+make run-consumers     # Todos os consumers
+
+# Executar individualmente
+make run-user-api      # User API
+make run-product-api   # Product API
+make run-order-api     # Order API
+make run-query-service # Query Service
+make run-user-consumer # User Consumer
+make run-product-consumer # Product Consumer
+make run-order-consumer   # Order Consumer
 ```
 
 ### Manutenção
