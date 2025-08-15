@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"query-api/internal/api/routes"
-	"query-api/internal/controllers"
+	"query-api/internal/api/controllers"
 	"query-api/internal/repo"
 	"query-api/internal/services"
 	pkgconfig "pkg/config"

@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"query-api/internal/controllers"
+	"query-api/internal/api/controllers"
 
 	"github.com/gin-gonic/gin"
 )
