@@ -47,6 +47,16 @@ bin/
 dist/
 build/
 
+# Binary files
+query-consumer
+query-api
+user-api
+product-api
+order-api
+user-consumer
+product-consumer
+order-consumer
+
 # Docker
 .dockerignore
 

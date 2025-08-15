@@ -3,7 +3,8 @@ package main
 import (
 	"context"
 	"query-consumer/internal/consumer"
-	"query-consumer/internal/projections"
+	"query-consumer/internal/repository"
+	"query-consumer/internal/services"
 	pkgconfig "pkg/config"
 	pkgkafka "pkg/kafka"
 	pkglog "pkg/log"
@@ -42,10 +43,15 @@ func main() {
 	
 	db := client.Database("ecommerce")
 	
-	// Inicializa projeções
-	orderProjection := projections.NewOrderProjection(db)
-	productProjection := projections.NewProductProjection(db)
-	userProjection := projections.NewUserProjection(db)
+	// Inicializa repositories
+	orderRepository := repository.NewMongoOrderRepository(db)
+	userRepository := repository.NewMongoUserRepository(db)
+	productRepository := repository.NewMongoProductRepository(db)
+	
+	// Inicializa services
+	orderService := services.NewOrderService(orderRepository)
+	userService := services.NewUserService(userRepository)
+	productService := services.NewProductService(productRepository)
 	
 	// Inicializa Kafka producer
 	kafkaProducer := pkgkafka.NewProducer(config.GetKafkaBrokers())
@@ -57,9 +63,11 @@ func main() {
 	
 	// Inicializa consumidor de eventos
 	eventConsumer := consumer.NewEventConsumer(
-		orderProjection,
-		productProjection,
-		userProjection,
+		orderService,
+		productService,
+		userService,
+		userRepository,
+		productRepository,
 		kafkaProducer,
 		idempotencyHandler,
 	)

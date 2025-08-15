@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"query-consumer/internal/projections"
+	"query-consumer/internal/services"
+	"query-consumer/internal/repository"
+	"query-consumer/internal/domain/entities"
 	pkgkafka "pkg/kafka"
 	pkgevents "pkg/events"
 	pkgidempotency "pkg/idempotency"
@@ -14,25 +16,31 @@ import (
 
 // EventConsumer consumidor de eventos para o query-service
 type EventConsumer struct {
-	orderProjection   *projections.OrderProjection
-	productProjection *projections.ProductProjection
-	userProjection    *projections.UserProjection
+	orderService      services.OrderService
+	productService    services.ProductService
+	userService       services.UserService
+	userRepository    repository.UserRepository
+	productRepository repository.ProductRepository
 	kafkaProducer     *pkgkafka.Producer
 	idempotencyHandler *pkgidempotency.Handler
 }
 
 // NewEventConsumer cria um novo consumidor de eventos
 func NewEventConsumer(
-	orderProjection *projections.OrderProjection,
-	productProjection *projections.ProductProjection,
-	userProjection *projections.UserProjection,
+	orderService services.OrderService,
+	productService services.ProductService,
+	userService services.UserService,
+	userRepository repository.UserRepository,
+	productRepository repository.ProductRepository,
 	kafkaProducer *pkgkafka.Producer,
 	idempotencyHandler *pkgidempotency.Handler,
 ) *EventConsumer {
 	return &EventConsumer{
-		orderProjection:   orderProjection,
-		productProjection: productProjection,
-		userProjection:    userProjection,
+		orderService:      orderService,
+		productService:    productService,
+		userService:       userService,
+		userRepository:    userRepository,
+		productRepository: productRepository,
 		kafkaProducer:     kafkaProducer,
 		idempotencyHandler: idempotencyHandler,
 	}
@@ -52,12 +60,12 @@ func (c *EventConsumer) HandleUserCreated(ctx context.Context, message []byte) e
 			Msg("processando evento user.created")
 		
 		// Atualiza projeção de usuário
-		if err := c.userProjection.HandleUserCreated(ctx, event); err != nil {
+		if err := c.userService.HandleUserCreated(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar user.created: %w", err)
 		}
 		
 		// Atualiza projeção de pedido (para incluir dados do usuário)
-		if err := c.orderProjection.HandleUserCreated(ctx, event); err != nil {
+		if err := c.orderService.HandleUserCreated(ctx, event); err != nil {
 			return fmt.Errorf("erro ao atualizar pedidos com dados do usuário: %w", err)
 		}
 		
@@ -79,12 +87,12 @@ func (c *EventConsumer) HandleProductCreated(ctx context.Context, message []byte
 			Msg("processando evento product.created")
 		
 		// Atualiza projeção de produto
-		if err := c.productProjection.HandleProductCreated(ctx, event); err != nil {
+		if err := c.productService.HandleProductCreated(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar product.created: %w", err)
 		}
 		
 		// Atualiza projeção de pedido (para incluir dados do produto)
-		if err := c.orderProjection.HandleProductCreated(ctx, event); err != nil {
+		if err := c.orderService.HandleProductCreated(ctx, event); err != nil {
 			return fmt.Errorf("erro ao atualizar pedidos com dados do produto: %w", err)
 		}
 		
@@ -106,12 +114,12 @@ func (c *EventConsumer) HandleProductUpdated(ctx context.Context, message []byte
 			Msg("processando evento product.updated")
 		
 		// Atualiza projeção de produto
-		if err := c.productProjection.HandleProductUpdated(ctx, event); err != nil {
+		if err := c.productService.HandleProductUpdated(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar product.updated: %w", err)
 		}
 		
 		// Atualiza projeção de pedido (para incluir dados do produto)
-		if err := c.orderProjection.HandleProductUpdated(ctx, event); err != nil {
+		if err := c.orderService.HandleProductUpdated(ctx, event); err != nil {
 			return fmt.Errorf("erro ao atualizar pedidos com dados do produto: %w", err)
 		}
 		
@@ -133,15 +141,15 @@ func (c *EventConsumer) HandleOrderCreated(ctx context.Context, message []byte) 
 			Msg("processando evento order.created")
 		
 		// Busca informações do usuário
-		user, err := c.userProjection.GetByID(ctx, int(event.Order.UserID))
+		user, err := c.userRepository.GetByID(ctx, int(event.Order.UserID))
 		if err != nil {
 			log.Warn().Err(err).Uint("user_id", event.Order.UserID).Msg("usuário não encontrado, continuando sem dados do usuário")
 		}
 		
 		// Busca informações dos produtos
-		productInfos := make(map[int]*projections.ProductProjectionView)
+		productInfos := make(map[int]*entities.ProductProjectionView)
 		for _, item := range event.Order.Items {
-			product, err := c.productProjection.GetByID(ctx, int(item.ProductID))
+			product, err := c.productRepository.GetByID(ctx, int(item.ProductID))
 			if err != nil {
 				log.Warn().Err(err).Uint("product_id", item.ProductID).Msg("produto não encontrado, continuando sem dados do produto")
 			} else {
@@ -150,7 +158,7 @@ func (c *EventConsumer) HandleOrderCreated(ctx context.Context, message []byte) 
 		}
 		
 		// Atualiza projeção de pedido com dados completos
-		if err := c.orderProjection.HandleOrderCreatedWithData(ctx, event, user, productInfos); err != nil {
+		if err := c.orderService.HandleOrderCreatedWithData(ctx, event, user, productInfos); err != nil {
 			return fmt.Errorf("erro ao processar order.created: %w", err)
 		}
 		
@@ -172,7 +180,7 @@ func (c *EventConsumer) HandleOrderPaid(ctx context.Context, message []byte) err
 			Msg("processando evento order.paid")
 		
 		// Atualiza projeção de pedido
-		if err := c.orderProjection.HandleOrderPaid(ctx, event); err != nil {
+		if err := c.orderService.HandleOrderPaid(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar order.paid: %w", err)
 		}
 		
@@ -194,7 +202,7 @@ func (c *EventConsumer) HandleOrderCanceled(ctx context.Context, message []byte)
 			Msg("processando evento order.canceled")
 		
 		// Atualiza projeção de pedido
-		if err := c.orderProjection.HandleOrderCanceled(ctx, event); err != nil {
+		if err := c.orderService.HandleOrderCanceled(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar order.canceled: %w", err)
 		}
 		
@@ -217,7 +225,7 @@ func (c *EventConsumer) HandleStockReserved(ctx context.Context, message []byte)
 			Msg("processando evento stock.reserved")
 		
 		// Atualiza projeção de produto
-		if err := c.productProjection.HandleStockReserved(ctx, event); err != nil {
+		if err := c.productService.HandleStockReserved(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar stock.reserved: %w", err)
 		}
 		
@@ -240,7 +248,7 @@ func (c *EventConsumer) HandleStockReleased(ctx context.Context, message []byte)
 			Msg("processando evento stock.released")
 		
 		// Atualiza projeção de produto
-		if err := c.productProjection.HandleStockReleased(ctx, event); err != nil {
+		if err := c.productService.HandleStockReleased(ctx, event); err != nil {
 			return fmt.Errorf("erro ao processar stock.released: %w", err)
 		}
 		
