@@ -55,14 +55,15 @@ func ToProductsResponse(products []entities.ProductView) responses.ProductsRespo
 	}
 }
 
+
+
 // ToOrderItemResponse converte OrderItemView para OrderItemResponse
 func ToOrderItemResponse(item entities.OrderItemView) responses.OrderItemResponse {
 	return responses.OrderItemResponse{
 		ProductID:   item.ProductID,
-		ProductName: item.ProductName,
 		Quantity:    item.Quantity,
-		Price:       item.Price,
-		Total:       item.Total,
+		UnitPrice:   item.UnitPrice,
+		Product:     ToProductResponse(item.Product),
 	}
 }
 

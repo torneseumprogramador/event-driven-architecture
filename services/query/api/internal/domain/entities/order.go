@@ -20,11 +20,12 @@ type OrderView struct {
 
 
 
+
+
 // OrderItemView representa um item do pedido na view
 type OrderItemView struct {
-	ProductID   int     `bson:"product_id" json:"product_id"`
-	ProductName string  `bson:"product_name" json:"product_name"`
-	Quantity    int     `bson:"quantity" json:"quantity"`
-	Price       float64 `bson:"price" json:"price"`
-	Total       float64 `bson:"total" json:"total"`
+	ProductID  int     `bson:"product_id" json:"product_id"`
+	Quantity   int     `bson:"quantity" json:"quantity"`
+	UnitPrice  float64 `bson:"unit_price" json:"unit_price"`
+	Product    ProductView `bson:"product" json:"product"`
 }

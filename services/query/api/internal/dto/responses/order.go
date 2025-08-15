@@ -6,13 +6,14 @@ import (
 
 
 
+
+
 // OrderItemResponse representa um item do pedido na resposta
 type OrderItemResponse struct {
 	ProductID   int     `json:"product_id"`
-	ProductName string  `json:"product_name"`
 	Quantity    int     `json:"quantity"`
-	Price       float64 `json:"price"`
-	Total       float64 `json:"total"`
+	UnitPrice   float64 `json:"unit_price"`
+	Product     ProductResponse `json:"product"`
 }
 
 // OrderResponse representa a resposta de pedido
