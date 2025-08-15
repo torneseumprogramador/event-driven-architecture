@@ -54,19 +54,19 @@ test: ## Executa testes em todos os serviços
 
 run-user-api: ## Executa a user-api
 	@echo "Executando user-api..."
-	@cd services/user/api && SERVICE_NAME=user-api PORT=8081 $(GO) run cmd/main.go
+	@cd services/user/api && MYSQL_DSN="ecommerce:ecommerce@tcp(localhost:3306)/ecommerce?parseTime=true" SERVICE_NAME=user-api PORT=8081 $(GO) run cmd/main.go
 
 run-product-api: ## Executa a product-api
 	@echo "Executando product-api..."
-	@cd services/product/api && SERVICE_NAME=product-api PORT=8082 $(GO) run cmd/main.go
+	@cd services/product/api && MYSQL_DSN="ecommerce:ecommerce@tcp(localhost:3306)/ecommerce?parseTime=true" SERVICE_NAME=product-api PORT=8082 $(GO) run cmd/main.go
 
 run-order-api: ## Executa a order-api
 	@echo "Executando order-api..."
-	@cd services/order/api && SERVICE_NAME=order-api PORT=8083 $(GO) run cmd/main.go
+	@cd services/order/api && MYSQL_DSN="ecommerce:ecommerce@tcp(localhost:3306)/ecommerce?parseTime=true" SERVICE_NAME=order-api PORT=8083 $(GO) run cmd/main.go
 
 run-query-api: ## Executa a query-api
 	@echo "Executando query-api..."
-	@cd services/query/api && SERVICE_NAME=query-api PORT=8084 $(GO) run cmd/main.go
+	@cd services/query/api && MONGO_URI="mongodb://admin:admin@localhost:27017/ecommerce?authSource=admin" SERVICE_NAME=query-api PORT=8084 $(GO) run cmd/main.go
 
 run-apis: run-user-api run-product-api run-order-api run-query-api ## Executa todas as APIs
 
@@ -76,19 +76,19 @@ run-apis: run-user-api run-product-api run-order-api run-query-api ## Executa to
 
 run-user-consumer: ## Executa o user-consumer
 	@echo "Executando user-consumer..."
-	@cd services/user/consumer && SERVICE_NAME=user-consumer $(GO) run cmd/main.go
+	@cd services/user/consumer && MYSQL_DSN="ecommerce:ecommerce@tcp(localhost:3306)/ecommerce?parseTime=true" KAFKA_BROKERS="localhost:9093" SERVICE_NAME=user-consumer $(GO) run cmd/main.go
 
 run-product-consumer: ## Executa o product-consumer
 	@echo "Executando product-consumer..."
-	@cd services/product/consumer && SERVICE_NAME=product-consumer $(GO) run cmd/main.go
+	@cd services/product/consumer && MYSQL_DSN="ecommerce:ecommerce@tcp(localhost:3306)/ecommerce?parseTime=true" KAFKA_BROKERS="localhost:9093" SERVICE_NAME=product-consumer $(GO) run cmd/main.go
 
 run-order-consumer: ## Executa o order-consumer
 	@echo "Executando order-consumer..."
-	@cd services/order/consumer && SERVICE_NAME=order-consumer $(GO) run cmd/main.go
+	@cd services/order/consumer && MYSQL_DSN="ecommerce:ecommerce@tcp(localhost:3306)/ecommerce?parseTime=true" KAFKA_BROKERS="localhost:9093" SERVICE_NAME=order-consumer $(GO) run cmd/main.go
 
 run-query-consumer: ## Executa o query-consumer
 	@echo "Executando query-consumer..."
-	@cd services/query/consumer && SERVICE_NAME=query-consumer $(GO) run cmd/main.go
+	@cd services/query/consumer && MONGO_URI="mongodb://admin:admin@localhost:27017/ecommerce?authSource=admin" KAFKA_BROKERS="localhost:9093" SERVICE_NAME=query-consumer $(GO) run cmd/main.go
 
 run-consumers: run-user-consumer run-product-consumer run-order-consumer run-query-consumer ## Executa todos os consumers
 
