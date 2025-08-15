@@ -2,12 +2,12 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"query-api/internal/dto"
 	"query-api/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // OrderController define o controller de pedidos
@@ -38,7 +38,7 @@ func (c *OrderController) GetOrders(ctx *gin.Context) {
 // GetOrder retorna um pedido pelo ID
 func (c *OrderController) GetOrder(ctx *gin.Context) {
 	idStr := ctx.Param("id")
-	id, err := primitive.ObjectIDFromHex(idStr)
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "ID inválido"})
 		return
@@ -46,7 +46,7 @@ func (c *OrderController) GetOrder(ctx *gin.Context) {
 
 	order, err := c.queryService.GetOrderByID(ctx.Request.Context(), id)
 	if err != nil {
-		log.Error().Err(err).Str("order_id", idStr).Msg("erro ao buscar pedido")
+		log.Error().Err(err).Int("order_id", id).Msg("erro ao buscar pedido")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "erro interno do servidor"})
 		return
 	}

@@ -4,8 +4,6 @@ import (
 	"context"
 	"query-api/internal/domain/entities"
 	"query-api/internal/repo"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // QueryService define a interface do serviço de consultas
@@ -15,7 +13,7 @@ type QueryService interface {
 	GetProducts(ctx context.Context) ([]entities.ProductView, error)
 	GetProductByID(ctx context.Context, id int) (*entities.ProductView, error)
 	GetOrders(ctx context.Context) ([]entities.OrderView, error)
-	GetOrderByID(ctx context.Context, id primitive.ObjectID) (*entities.OrderView, error)
+	GetOrderByID(ctx context.Context, id int) (*entities.OrderView, error)
 }
 
 // QueryServiceImpl implementa QueryService
@@ -64,6 +62,6 @@ func (s *QueryServiceImpl) GetOrders(ctx context.Context) ([]entities.OrderView,
 }
 
 // GetOrderByID retorna um pedido pelo ID
-func (s *QueryServiceImpl) GetOrderByID(ctx context.Context, id primitive.ObjectID) (*entities.OrderView, error) {
+func (s *QueryServiceImpl) GetOrderByID(ctx context.Context, id int) (*entities.OrderView, error) {
 	return s.orderRepo.FindByID(ctx, id)
 }

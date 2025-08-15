@@ -2,13 +2,11 @@ package entities
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // OrderView representa a view de pedido no MongoDB
 type OrderView struct {
-	ID          primitive.ObjectID `bson:"_id" json:"id"`
+	ID          int                `bson:"_id" json:"id"`
 	UserID      int                `bson:"user_id" json:"user_id"`
 	Status      string             `bson:"status" json:"status"`
 	Total       float64            `bson:"total" json:"total"`

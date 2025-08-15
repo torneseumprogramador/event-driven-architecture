@@ -35,12 +35,25 @@ func (r *GormOrderRepository) Create(ctx context.Context, order *entities.Order)
 			return err
 		}
 		
-		// Cria os itens do pedido um por um para evitar conflitos
+		// Cria os itens do pedido verificando se já existem
 		for i := range order.Items {
 			order.Items[i].OrderID = order.ID
-			if err := tx.Create(&order.Items[i]).Error; err != nil {
+			
+			// Verifica se o item já existe
+			var existingItem entities.OrderProduct
+			err := tx.Where("order_id = ? AND product_id = ?", order.Items[i].OrderID, order.Items[i].ProductID).
+				First(&existingItem).Error
+			
+			if err == gorm.ErrRecordNotFound {
+				// Item não existe, cria novo
+				if err := tx.Create(&order.Items[i]).Error; err != nil {
+					return err
+				}
+			} else if err != nil {
+				// Erro na consulta
 				return err
 			}
+			// Se item já existe, ignora (idempotência)
 		}
 		
 		return nil

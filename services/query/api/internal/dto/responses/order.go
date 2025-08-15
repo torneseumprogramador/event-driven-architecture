@@ -2,8 +2,6 @@ package responses
 
 import (
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // OrderItemResponse representa um item do pedido na resposta
@@ -17,15 +15,15 @@ type OrderItemResponse struct {
 
 // OrderResponse representa a resposta de pedido
 type OrderResponse struct {
-	ID          primitive.ObjectID `json:"id"`
-	UserID      int                `json:"user_id"`
-	Status      string             `json:"status"`
-	Total       float64            `json:"total"`
+	ID          int                 `json:"id"`
+	UserID      int                 `json:"user_id"`
+	Status      string              `json:"status"`
+	Total       float64             `json:"total"`
 	Items       []OrderItemResponse `json:"items"`
-	CreatedAt   time.Time          `json:"created_at"`
-	UpdatedAt   time.Time          `json:"updated_at"`
-	PaidAt      *time.Time         `json:"paid_at,omitempty"`
-	CanceledAt  *time.Time         `json:"canceled_at,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	PaidAt      *time.Time          `json:"paid_at,omitempty"`
+	CanceledAt  *time.Time          `json:"canceled_at,omitempty"`
 }
 
 // OrdersResponse representa a resposta de lista de pedidos

@@ -5,14 +5,13 @@ import (
 	"query-api/internal/domain/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // OrderRepository define a interface do repositório de pedidos
 type OrderRepository interface {
 	FindAll(ctx context.Context) ([]entities.OrderView, error)
-	FindByID(ctx context.Context, id primitive.ObjectID) (*entities.OrderView, error)
+	FindByID(ctx context.Context, id int) (*entities.OrderView, error)
 }
 
 // MongoOrderRepository implementa OrderRepository usando MongoDB
@@ -44,7 +43,7 @@ func (r *MongoOrderRepository) FindAll(ctx context.Context) ([]entities.OrderVie
 }
 
 // FindByID retorna um pedido pelo ID
-func (r *MongoOrderRepository) FindByID(ctx context.Context, id primitive.ObjectID) (*entities.OrderView, error) {
+func (r *MongoOrderRepository) FindByID(ctx context.Context, id int) (*entities.OrderView, error) {
 	var order entities.OrderView
 	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&order)
 	if err != nil {
