@@ -267,35 +267,47 @@ event-driven-architecture/
 │   │           └── main.go
 │   └── query/                       # Domínio de consultas
 │       ├── api/                     # API HTTP (Port: 8084)
+│       │   ├── cmd/
+│       │   │   └── main.go
+│       │   ├── go.mod
+│       │   ├── go.sum
 │       │   ├── internal/
+│       │   │   ├── api/
+│       │   │   │   └── routes/      # Configuração de rotas
+│       │   │   │       └── routes.go
+│       │   │   ├── controllers/     # Controllers HTTP
+│       │   │   │   ├── user_controller.go
+│       │   │   │   ├── product_controller.go
+│       │   │   │   └── order_controller.go
 │       │   │   ├── domain/
 │       │   │   │   └── entities/    # Entidades de domínio
-│       │   │   │       └── views.go
+│       │   │   │       ├── user.go
+│       │   │   │       ├── product.go
+│       │   │   │       └── order.go
 │       │   │   ├── dto/
+│       │   │   │   ├── converter.go
 │       │   │   │   └── responses/   # DTOs de saída
 │       │   │   │       ├── user.go
 │       │   │   │       ├── product.go
 │       │   │   │       └── order.go
-│       │   │   ├── controllers/     # Controllers HTTP
-│       │   │   │   └── query_controller.go
 │       │   │   ├── repo/            # Repositórios MongoDB
 │       │   │   │   ├── user_repository.go
 │       │   │   │   ├── product_repository.go
 │       │   │   │   └── order_repository.go
 │       │   │   └── services/        # Serviços de domínio
 │       │   │       └── query_service.go
-│       │   └── cmd/
-│       │       └── main.go
+│       │   └── query-api            # Binário compilado
 │       └── consumer/                # Consumer Kafka
-│           ├── internal/
-│           │   ├── consumer/        # Consumidores de eventos
-│           │   │   └── event_consumer.go
-│           │   └── projections/     # Projeções MongoDB
-│           │       ├── user_projection.go
-│           │       ├── product_projection.go
-│           │       └── order_projection.go
-│           └── cmd/
-│               └── main.go
+│           ├── cmd/
+│           │   └── main.go
+│           ├── go.mod
+│           └── internal/
+│               ├── consumer/        # Consumidores de eventos
+│               │   └── event_consumer.go
+│               └── projections/     # Projeções MongoDB
+│                   ├── user_projection.go
+│                   ├── product_projection.go
+│                   └── order_projection.go
 ├── docker-compose.yml               # Orquestração Docker
 ├── go.work                          # Workspace Go
 ├── Makefile                         # Comandos de automação
@@ -429,14 +441,45 @@ query-service/
 ```
 query/
 ├── api/              # 🚀 Apenas HTTP (Port: 8084)
-│   ├── controllers/  # Controllers HTTP
-│   ├── services/     # Serviços de negócio
-│   ├── repo/         # Repositórios MongoDB
-│   ├── dto/          # DTOs de resposta
-│   └── domain/       # Entidades de domínio
-└── consumer/         # Apenas Kafka
-    ├── consumer/     # Consumidores de eventos
-    └── projections/  # Projeções MongoDB
+│   ├── cmd/
+│   │   └── main.go
+│   ├── go.mod
+│   ├── go.sum
+│   ├── internal/
+│   │   ├── api/routes/       # Configuração de rotas
+│   │   │   └── routes.go
+│   │   ├── controllers/      # Controllers específicos
+│   │   │   ├── user_controller.go
+│   │   │   ├── product_controller.go
+│   │   │   └── order_controller.go
+│   │   ├── domain/entities/  # Entidades separadas
+│   │   │   ├── user.go
+│   │   │   ├── product.go
+│   │   │   └── order.go
+│   │   ├── dto/
+│   │   │   ├── converter.go
+│   │   │   └── responses/    # DTOs de resposta
+│   │   │       ├── user.go
+│   │   │       ├── product.go
+│   │   │       └── order.go
+│   │   ├── repo/             # Repositórios MongoDB
+│   │   │   ├── user_repository.go
+│   │   │   ├── product_repository.go
+│   │   │   └── order_repository.go
+│   │   └── services/         # Serviços de domínio
+│   │       └── query_service.go
+│   └── query-api             # Binário compilado
+└── consumer/                 # Apenas Kafka
+    ├── cmd/
+    │   └── main.go
+    ├── go.mod
+    └── internal/
+        ├── consumer/         # Consumidores de eventos
+        │   └── event_consumer.go
+        └── projections/      # Projeções MongoDB
+            ├── user_projection.go
+            ├── product_projection.go
+            └── order_projection.go
 ```
 
 #### ✅ **Benefícios da Reorganização**
@@ -445,7 +488,53 @@ query/
 - **Escalabilidade independente** da API e Consumer
 - **Manutenibilidade** melhorada com responsabilidades bem definidas
 
-### 8. Endpoints da Query API
+### 8. Organização de Arquivos por Domínio
+
+#### 🏗️ **Estrutura Anterior (Monolítica)**
+```
+query-api/internal/
+├── domain/entities/
+│   └── views.go              # ❌ Tudo em um arquivo
+├── controllers/
+│   └── query_controller.go   # ❌ Tudo em um arquivo
+└── ❌ Sem arquivo de rotas
+```
+
+#### 🎯 **Estrutura Atual (Enterprise-Grade)**
+```
+query-api/internal/
+├── api/routes/
+│   └── routes.go             # ✅ Configuração centralizada
+├── controllers/
+│   ├── user_controller.go    # ✅ Endpoints de usuários
+│   ├── product_controller.go # ✅ Endpoints de produtos
+│   └── order_controller.go   # ✅ Endpoints de pedidos
+├── domain/entities/
+│   ├── user.go               # ✅ Entidade UserView
+│   ├── product.go            # ✅ Entidade ProductView
+│   └── order.go              # ✅ Entidades OrderView + OrderItemView
+├── dto/
+│   ├── converter.go          # ✅ Conversores
+│   └── responses/            # ✅ DTOs de resposta
+│       ├── user.go
+│       ├── product.go
+│       └── order.go
+├── repo/                     # ✅ Repositórios MongoDB
+│   ├── user_repository.go
+│   ├── product_repository.go
+│   └── order_repository.go
+└── services/                 # ✅ Serviços de domínio
+    └── query_service.go
+```
+
+#### ✅ **Benefícios da Organização por Domínio**
+- **Single Responsibility**: Cada arquivo tem uma responsabilidade específica
+- **Manutenibilidade**: Mudanças em um domínio não afetam outros
+- **Escalabilidade**: Novos domínios podem ser adicionados facilmente
+- **Testabilidade**: Testes unitários mais focados e organizados
+- **Legibilidade**: Código mais fácil de navegar e entender
+
+### 9. Endpoints da Query API
 
 #### 🔍 **Consulta de Usuários**
 ```bash
