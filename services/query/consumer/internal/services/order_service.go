@@ -101,12 +101,18 @@ func (s *OrderServiceImpl) HandleOrderCreated(ctx context.Context, event pkgeven
 		}
 	}
 	
+	// Calcula o total baseado nos itens
+	var totalAmount float64
+	for _, item := range items {
+		totalAmount += float64(item.Quantity) * item.UnitPrice
+	}
+	
 	// Cria a projeção do pedido
 	orderView := &entities.OrderView{
 		ID:          int(event.Order.ID),
 		UserID:      int(event.Order.UserID),
 		Status:      event.Order.Status,
-		TotalAmount: event.Order.TotalAmount,
+		TotalAmount: totalAmount,
 		CreatedAt:   event.OccurredAt,
 		UpdatedAt:   time.Now(),
 		Items:       items,
@@ -154,12 +160,18 @@ func (s *OrderServiceImpl) HandleOrderCreatedWithData(ctx context.Context, event
 		userEmail = user.Email
 	}
 	
+	// Calcula o total baseado nos itens
+	var totalAmount float64
+	for _, item := range items {
+		totalAmount += float64(item.Quantity) * item.UnitPrice
+	}
+	
 	// Cria a projeção do pedido com dados completos
 	orderView := &entities.OrderView{
 		ID:          int(event.Order.ID),
 		UserID:      int(event.Order.UserID),
 		Status:      event.Order.Status,
-		TotalAmount: event.Order.TotalAmount,
+		TotalAmount: totalAmount,
 		CreatedAt:   event.OccurredAt,
 		UpdatedAt:   time.Now(),
 		User: entities.UserView{

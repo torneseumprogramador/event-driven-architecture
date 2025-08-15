@@ -9,7 +9,7 @@ type OrderView struct {
 	ID          int                `bson:"_id" json:"id"`
 	UserID      int                `bson:"user_id" json:"user_id"`
 	Status      string             `bson:"status" json:"status"`
-	Total       float64            `bson:"total" json:"total"`
+	Total       float64            `bson:"total_amount" json:"total"`
 	User        UserView           `bson:"user" json:"user"`
 	Items       []OrderItemView    `bson:"items" json:"items"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
