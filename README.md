@@ -304,10 +304,18 @@ event-driven-architecture/
 │           └── internal/
 │               ├── consumer/        # Consumidores de eventos
 │               │   └── event_consumer.go
-│               └── projections/     # Projeções MongoDB
-│                   ├── user_projection.go
-│                   ├── product_projection.go
-│                   └── order_projection.go
+│               ├── domain/entities/  # Entidades de domínio
+│               │   ├── order.go
+│               │   ├── user.go
+│               │   └── product.go
+│               ├── repository/       # Repositórios MongoDB
+│               │   ├── order_repository.go
+│               │   ├── user_repository.go
+│               │   └── product_repository.go
+│               └── services/         # Serviços de domínio
+│                   ├── order_service.go
+│                   ├── user_service.go
+│                   └── product_service.go
 ├── docker-compose.yml               # Orquestração Docker
 ├── go.work                          # Workspace Go
 ├── Makefile                         # Comandos de automação
@@ -476,10 +484,18 @@ query/
     └── internal/
         ├── consumer/         # Consumidores de eventos
         │   └── event_consumer.go
-        └── projections/      # Projeções MongoDB
-            ├── user_projection.go
-            ├── product_projection.go
-            └── order_projection.go
+        ├── domain/entities/  # Entidades de domínio
+        │   ├── order.go
+        │   ├── user.go
+        │   └── product.go
+        ├── repository/       # Repositórios MongoDB
+        │   ├── order_repository.go
+        │   ├── user_repository.go
+        │   └── product_repository.go
+        └── services/         # Serviços de domínio
+            ├── order_service.go
+            ├── user_service.go
+            └── product_service.go
 ```
 
 #### ✅ **Benefícios da Reorganização**
@@ -533,6 +549,60 @@ query-api/internal/
 - **Escalabilidade**: Novos domínios podem ser adicionados facilmente
 - **Testabilidade**: Testes unitários mais focados e organizados
 - **Legibilidade**: Código mais fácil de navegar e entender
+
+### 10. Refatoração do Query-Consumer (Clean Architecture)
+
+#### 🏗️ **Estrutura Anterior (Misturada)**
+```
+query-consumer/internal/
+├── projections/              # ❌ Entidades + Repository + Business Logic misturados
+│   ├── order_projection.go   # ❌ Tudo em um arquivo
+│   ├── product_projection.go # ❌ Tudo em um arquivo
+│   └── user_projection.go    # ❌ Tudo em um arquivo
+├── consumer/
+└── cmd/
+```
+
+#### 🎯 **Estrutura Atual (Clean Architecture)**
+```
+query-consumer/internal/
+├── domain/entities/          # ✅ Entidades puras
+│   ├── order.go             # ✅ OrderView, UserView, ProductView, OrderItemView
+│   ├── user.go              # ✅ UserProjectionView
+│   └── product.go           # ✅ ProductProjectionView
+├── repository/              # ✅ Acesso a dados (interfaces + implementações)
+│   ├── order_repository.go  # ✅ OrderRepository + MongoOrderRepository
+│   ├── user_repository.go   # ✅ UserRepository + MongoUserRepository
+│   └── product_repository.go # ✅ ProductRepository + MongoProductRepository
+├── services/                # ✅ Business Logic
+│   ├── order_service.go     # ✅ OrderService + OrderServiceImpl
+│   ├── user_service.go      # ✅ UserService + UserServiceImpl
+│   └── product_service.go   # ✅ ProductService + ProductServiceImpl
+├── consumer/                # ✅ Orquestração
+│   └── event_consumer.go    # ✅ Consumidores de eventos
+└── cmd/                     # ✅ Entry point
+    └── main.go
+```
+
+#### ✅ **Benefícios da Refatoração**
+- **Clean Architecture**: Separação clara entre camadas
+- **Dependency Inversion**: Services dependem de interfaces, não implementações
+- **Single Responsibility**: Cada arquivo tem uma única responsabilidade
+- **Testabilidade**: Fácil mockar repositories para testar services
+- **Manutenibilidade**: Mudanças isoladas por camada
+- **Escalabilidade**: Fácil trocar implementações (ex: MongoDB → PostgreSQL)
+
+#### 🔄 **Fluxo de Dependências**
+```
+Consumer → Services → Repositories → MongoDB
+    ↓         ↓           ↓
+Orquestração → Business Logic → Data Access
+```
+
+#### 📦 **Organização por Domínio**
+- **Order**: `order.go` + `order_repository.go` + `order_service.go`
+- **User**: `user.go` + `user_repository.go` + `user_service.go`
+- **Product**: `product.go` + `product_repository.go` + `product_service.go`
 
 ### 9. Endpoints da Query API
 
@@ -667,6 +737,26 @@ services/
 - **Deployments isolados**: Mudanças na API não afetam o Consumer e vice-versa
 - **Monitoramento específico**: Métricas HTTP vs Métricas Kafka
 - **Isolamento de falhas**: Falha em um não afeta o outro
+
+### 7. Clean Architecture
+
+**Princípio**: Separação de responsabilidades em camadas bem definidas com dependências invertidas.
+
+**Implementação**:
+```
+internal/
+├── domain/entities/  # 🎯 Entidades de domínio (regras de negócio)
+├── repository/       # 📦 Acesso a dados (interfaces + implementações)
+├── services/         # ⚙️ Business logic (orquestração)
+└── consumer/         # 🎬 Orquestração (entry points)
+```
+
+**Benefícios**:
+- **Dependency Inversion**: Services dependem de interfaces, não implementações
+- **Single Responsibility**: Cada camada tem responsabilidade específica
+- **Testabilidade**: Fácil mockar dependências para testes
+- **Manutenibilidade**: Mudanças isoladas por camada
+- **Escalabilidade**: Fácil trocar implementações (ex: MongoDB → PostgreSQL)
 
 ## 🔧 Configuração
 
