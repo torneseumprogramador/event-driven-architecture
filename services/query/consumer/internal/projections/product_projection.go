@@ -43,7 +43,9 @@ func (p *ProductProjection) HandleProductCreated(ctx context.Context, event pkge
 		UpdatedAt: time.Now(),
 	}
 	
-	_, err := p.collection.InsertOne(ctx, productView)
+	// Usa ReplaceOne com upsert para evitar erro de chave duplicada
+	filter := bson.M{"_id": event.Product.ID}
+	_, err := p.collection.ReplaceOne(ctx, filter, productView, options.Replace().SetUpsert(true))
 	return err
 }
 

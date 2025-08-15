@@ -139,7 +139,9 @@ func (p *OrderProjection) HandleOrderCreated(ctx context.Context, event pkgevent
 		Items:       items,
 	}
 	
-	_, err := p.collection.InsertOne(ctx, orderView)
+	// Usa ReplaceOne com upsert para evitar erro de chave duplicada
+	filter := bson.M{"_id": event.Order.ID}
+	_, err := p.collection.ReplaceOne(ctx, filter, orderView, options.Replace().SetUpsert(true))
 	return err
 }
 

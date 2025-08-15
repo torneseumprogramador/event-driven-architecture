@@ -41,7 +41,9 @@ func (p *UserProjection) HandleUserCreated(ctx context.Context, event pkgevents.
 		UpdatedAt: time.Now(),
 	}
 	
-	_, err := p.collection.InsertOne(ctx, userView)
+	// Usa ReplaceOne com upsert para evitar erro de chave duplicada
+	filter := bson.M{"_id": event.User.ID}
+	_, err := p.collection.ReplaceOne(ctx, filter, userView, options.Replace().SetUpsert(true))
 	return err
 }
 
