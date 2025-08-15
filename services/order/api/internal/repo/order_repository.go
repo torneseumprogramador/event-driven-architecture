@@ -35,13 +35,12 @@ func (r *GormOrderRepository) Create(ctx context.Context, order *entities.Order)
 			return err
 		}
 		
-		// Cria os itens do pedido
+		// Cria os itens do pedido um por um para evitar conflitos
 		for i := range order.Items {
 			order.Items[i].OrderID = order.ID
-		}
-		
-		if err := tx.Create(&order.Items).Error; err != nil {
-			return err
+			if err := tx.Create(&order.Items[i]).Error; err != nil {
+				return err
+			}
 		}
 		
 		return nil
