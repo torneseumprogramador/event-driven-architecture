@@ -78,6 +78,11 @@ func ToOrderResponse(order entities.OrderView) responses.OrderResponse {
 		UserID:      order.UserID,
 		Status:      order.Status,
 		Total:       order.Total,
+		User: responses.UserResponse{
+			ID:    order.User.ID,
+			Name:  order.User.Name,
+			Email: order.User.Email,
+		},
 		Items:       itemResponses,
 		CreatedAt:   order.CreatedAt,
 		UpdatedAt:   order.UpdatedAt,

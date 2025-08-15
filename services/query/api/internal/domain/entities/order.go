@@ -10,12 +10,15 @@ type OrderView struct {
 	UserID      int                `bson:"user_id" json:"user_id"`
 	Status      string             `bson:"status" json:"status"`
 	Total       float64            `bson:"total" json:"total"`
+	User        UserView           `bson:"user" json:"user"`
 	Items       []OrderItemView    `bson:"items" json:"items"`
 	CreatedAt   time.Time          `bson:"created_at" json:"created_at"`
 	UpdatedAt   time.Time          `bson:"updated_at" json:"updated_at"`
 	PaidAt      *time.Time         `bson:"paid_at,omitempty" json:"paid_at,omitempty"`
 	CanceledAt  *time.Time         `bson:"canceled_at,omitempty" json:"canceled_at,omitempty"`
 }
+
+
 
 // OrderItemView representa um item do pedido na view
 type OrderItemView struct {

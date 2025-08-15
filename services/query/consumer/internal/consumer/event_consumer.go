@@ -132,8 +132,25 @@ func (c *EventConsumer) HandleOrderCreated(ctx context.Context, message []byte) 
 			Uint("order_id", event.Order.ID).
 			Msg("processando evento order.created")
 		
-		// Atualiza projeção de pedido
-		if err := c.orderProjection.HandleOrderCreated(ctx, event); err != nil {
+		// Busca informações do usuário
+		user, err := c.userProjection.GetByID(ctx, int(event.Order.UserID))
+		if err != nil {
+			log.Warn().Err(err).Uint("user_id", event.Order.UserID).Msg("usuário não encontrado, continuando sem dados do usuário")
+		}
+		
+		// Busca informações dos produtos
+		productInfos := make(map[int]*projections.ProductProjectionView)
+		for _, item := range event.Order.Items {
+			product, err := c.productProjection.GetByID(ctx, int(item.ProductID))
+			if err != nil {
+				log.Warn().Err(err).Uint("product_id", item.ProductID).Msg("produto não encontrado, continuando sem dados do produto")
+			} else {
+				productInfos[int(item.ProductID)] = product
+			}
+		}
+		
+		// Atualiza projeção de pedido com dados completos
+		if err := c.orderProjection.HandleOrderCreatedWithData(ctx, event, user, productInfos); err != nil {
 			return fmt.Errorf("erro ao processar order.created: %w", err)
 		}
 		

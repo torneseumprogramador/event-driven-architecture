@@ -12,7 +12,7 @@ import (
 
 // UserProjectionView representa a projeção de usuário no MongoDB
 type UserProjectionView struct {
-	ID        uint      `bson:"_id"`
+	ID        int       `bson:"_id"`
 	Name      string    `bson:"name"`
 	Email     string    `bson:"email"`
 	CreatedAt time.Time `bson:"created_at"`
@@ -34,7 +34,7 @@ func NewUserProjection(db *mongo.Database) *UserProjection {
 // HandleUserCreated processa evento de usuário criado
 func (p *UserProjection) HandleUserCreated(ctx context.Context, event pkgevents.UserCreated) error {
 	userView := UserProjectionView{
-		ID:        event.User.ID,
+		ID:        int(event.User.ID),
 		Name:      event.User.Name,
 		Email:     event.User.Email,
 		CreatedAt: event.OccurredAt,
@@ -81,7 +81,7 @@ func (p *UserProjection) GetAll(ctx context.Context) ([]UserProjectionView, erro
 }
 
 // GetByID busca usuário por ID
-func (p *UserProjection) GetByID(ctx context.Context, id uint) (*UserProjectionView, error) {
+func (p *UserProjection) GetByID(ctx context.Context, id int) (*UserProjectionView, error) {
 	var user UserProjectionView
 	err := p.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&user)
 	if err != nil {

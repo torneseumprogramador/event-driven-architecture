@@ -12,7 +12,7 @@ import (
 
 // ProductProjectionView representa a projeção de produto no MongoDB
 type ProductProjectionView struct {
-	ID        uint      `bson:"_id"`
+	ID        int       `bson:"_id"`
 	Name      string    `bson:"name"`
 	Price     float64   `bson:"price"`
 	Stock     int       `bson:"stock"`
@@ -35,7 +35,7 @@ func NewProductProjection(db *mongo.Database) *ProductProjection {
 // HandleProductCreated processa evento de produto criado
 func (p *ProductProjection) HandleProductCreated(ctx context.Context, event pkgevents.ProductCreated) error {
 	productView := ProductProjectionView{
-		ID:        event.Product.ID,
+		ID:        int(event.Product.ID),
 		Name:      event.Product.Name,
 		Price:     event.Product.Price,
 		Stock:     event.Product.Stock,
@@ -116,7 +116,7 @@ func (p *ProductProjection) GetAll(ctx context.Context) ([]ProductProjectionView
 }
 
 // GetByID busca produto por ID
-func (p *ProductProjection) GetByID(ctx context.Context, id uint) (*ProductProjectionView, error) {
+func (p *ProductProjection) GetByID(ctx context.Context, id int) (*ProductProjectionView, error) {
 	var product ProductProjectionView
 	err := p.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&product)
 	if err != nil {

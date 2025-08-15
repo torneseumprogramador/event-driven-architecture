@@ -63,11 +63,11 @@ func (p *OrderProjection) HandleUserCreated(ctx context.Context, event pkgevents
 	filter := bson.M{"user_id": event.User.ID}
 	update := bson.M{
 		"$set": bson.M{
-			"user": UserView{
-				ID:    event.User.ID,
-				Name:  event.User.Name,
-				Email: event.User.Email,
-			},
+					"user": UserView{
+			ID:    int(event.User.ID),
+			Name:  event.User.Name,
+			Email: event.User.Email,
+		},
 			"updated_at": time.Now(),
 		},
 	}
@@ -83,7 +83,7 @@ func (p *OrderProjection) HandleProductCreated(ctx context.Context, event pkgeve
 	update := bson.M{
 		"$set": bson.M{
 			"items.$.product": ProductView{
-				ID:    event.Product.ID,
+				ID:    int(event.Product.ID),
 				Name:  event.Product.Name,
 				Price: event.Product.Price,
 				Stock: event.Product.Stock,
@@ -103,7 +103,7 @@ func (p *OrderProjection) HandleProductUpdated(ctx context.Context, event pkgeve
 	update := bson.M{
 		"$set": bson.M{
 			"items.$.product": ProductView{
-				ID:    event.Product.ID,
+				ID:    int(event.Product.ID),
 				Name:  event.Product.Name,
 				Price: event.Product.Price,
 				Stock: event.Product.Stock,
@@ -122,7 +122,7 @@ func (p *OrderProjection) HandleOrderCreated(ctx context.Context, event pkgevent
 	items := make([]OrderItemView, len(event.Order.Items))
 	for i, item := range event.Order.Items {
 		items[i] = OrderItemView{
-			ProductID: item.ProductID,
+			ProductID: int(item.ProductID),
 			Quantity:  item.Quantity,
 			UnitPrice: item.UnitPrice,
 		}
@@ -130,13 +130,73 @@ func (p *OrderProjection) HandleOrderCreated(ctx context.Context, event pkgevent
 	
 	// Cria a projeção do pedido
 	orderView := OrderView{
-		ID:          event.Order.ID,
-		UserID:      event.Order.UserID,
+		ID:          int(event.Order.ID),
+		UserID:      int(event.Order.UserID),
 		Status:      event.Order.Status,
 		TotalAmount: event.Order.TotalAmount,
 		CreatedAt:   event.OccurredAt,
 		UpdatedAt:   time.Now(),
 		Items:       items,
+	}
+	
+	// Usa ReplaceOne com upsert para evitar erro de chave duplicada
+	filter := bson.M{"_id": event.Order.ID}
+	_, err := p.collection.ReplaceOne(ctx, filter, orderView, options.Replace().SetUpsert(true))
+	return err
+}
+
+// HandleOrderCreatedWithData processa evento de pedido criado com dados completos
+func (p *OrderProjection) HandleOrderCreatedWithData(ctx context.Context, event pkgevents.OrderCreated, user *UserProjectionView, productInfos map[int]*ProductProjectionView) error {
+	// Converte itens para o formato da projeção com dados completos
+	items := make([]OrderItemView, len(event.Order.Items))
+	for i, item := range event.Order.Items {
+		productInfo := productInfos[int(item.ProductID)]
+		var productName string
+		var productPrice float64
+		var productStock int
+		
+		if productInfo != nil {
+			productName = productInfo.Name
+			productPrice = productInfo.Price
+			productStock = productInfo.Stock
+		}
+		
+		items[i] = OrderItemView{
+			ProductID:  int(item.ProductID),
+			Quantity:   item.Quantity,
+			UnitPrice:  item.UnitPrice,
+			Product: ProductView{
+				ID:    int(item.ProductID),
+				Name:  productName,
+				Price: productPrice,
+				Stock: productStock,
+			},
+		}
+	}
+	
+	// Prepara dados do usuário
+	var userName string
+	var userEmail string
+	
+	if user != nil {
+		userName = user.Name
+		userEmail = user.Email
+	}
+	
+	// Cria a projeção do pedido com dados completos
+	orderView := OrderView{
+		ID:          int(event.Order.ID),
+		UserID:      int(event.Order.UserID),
+		Status:      event.Order.Status,
+		TotalAmount: event.Order.TotalAmount,
+		CreatedAt:   event.OccurredAt,
+		UpdatedAt:   time.Now(),
+		User: UserView{
+			ID:    int(event.Order.UserID),
+			Name:  userName,
+			Email: userEmail,
+		},
+		Items: items,
 	}
 	
 	// Usa ReplaceOne com upsert para evitar erro de chave duplicada

@@ -4,6 +4,8 @@ import (
 	"time"
 )
 
+
+
 // OrderItemResponse representa um item do pedido na resposta
 type OrderItemResponse struct {
 	ProductID   int     `json:"product_id"`
@@ -19,6 +21,7 @@ type OrderResponse struct {
 	UserID      int                 `json:"user_id"`
 	Status      string              `json:"status"`
 	Total       float64             `json:"total"`
+	User        UserResponse        `json:"user"`
 	Items       []OrderItemResponse `json:"items"`
 	CreatedAt   time.Time           `json:"created_at"`
 	UpdatedAt   time.Time           `json:"updated_at"`
