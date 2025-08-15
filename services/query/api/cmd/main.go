@@ -66,10 +66,12 @@ func main() {
 	router.GET("/healthz", pkghttp.HealthCheck())
 	
 	// Configura controllers
-	queryController := controllers.NewQueryController(queryService)
+	userController := controllers.NewUserController(queryService)
+	productController := controllers.NewProductController(queryService)
+	orderController := controllers.NewOrderController(queryService)
 	
 	// Configura rotas
-	routes.SetupQueryRoutes(router, queryController)
+	routes.SetupQueryRoutes(router, userController, productController, orderController)
 	
 	// Inicia servidor
 	log.Info().Msg("servidor iniciado")
